@@ -99,9 +99,8 @@ const DUMMY_BADGES = [
 ];
 
 export default function Perfil() {
-    const [usuario, setUsuario] = useState<Usuario | null>(null);
+    const [localUsuario, setLocalUsuario] = useState<Usuario | null>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
-    const [stats, setStats] = useState<Stats | null>(null);
     const [atualizando, setAtualizando] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editForm, setEditForm] = useState({ nome: '', riot_id: '' });
@@ -112,14 +111,12 @@ export default function Perfil() {
     const { data: usuarioApi, mutate: mutateUsuario } = useSWR('/usuarios/me', fetcher);
     
     // Merge de dados (localStorage + SWR)
-    const currentUser = usuarioApi || usuario;
+    const usuario = usuarioApi || localUsuario;
     
-    const { data: statsApi, isLoading: loadingStats } = useSWR(
-        currentUser?.id ? `/stats/${currentUser.id}` : null,
+    const { data: stats, isLoading: loadingStats, mutate: mutateStats } = useSWR(
+        usuario?.id ? `/stats/${usuario.id}` : null,
         fetcher
     );
-    
-    const currentStats = statsApi || stats;
 
     async function handleAvatarSuccess(url: string) {
         setAvatarUrl(url);
@@ -130,7 +127,7 @@ export default function Perfil() {
             const u = parsed.usuario || parsed;
             const updatedUser = { ...u, avatar_url: url };
             localStorage.setItem('usuario', JSON.stringify(updatedUser));
-            setUsuario(updatedUser);
+            setLocalUsuario(updatedUser);
             window.dispatchEvent(new Event('localStorageChange'));
         }
         try {
@@ -153,7 +150,7 @@ export default function Perfil() {
             return;
         }
 
-        setUsuario(userObj);
+        setLocalUsuario(userObj);
         setAvatarUrl(userObj.avatar_url);
         // SWR takes over the stats and user fetching
     }, []);
@@ -161,12 +158,12 @@ export default function Perfil() {
 
 
     async function changeBanner() {
-        if (!currentUser) return;
-        const nextPreset = ((currentUser.banner_preset ?? 0) + 1) % BANNER_PRESETS.length;
+        if (!usuario) return;
+        const nextPreset = ((usuario.banner_preset ?? 0) + 1) % BANNER_PRESETS.length;
         
         // Optimistic update
-        mutateUsuario({ ...currentUser, banner_preset: nextPreset }, false);
-        setUsuario({ ...currentUser, banner_preset: nextPreset });
+        mutateUsuario({ ...usuario, banner_preset: nextPreset }, false);
+        setLocalUsuario({ ...usuario, banner_preset: nextPreset });
         
         try {
             await api.put('/usuarios/me', { banner_preset: nextPreset });
@@ -188,10 +185,9 @@ export default function Perfil() {
         setAtualizando(true);
         try {
             const { data } = await api.post(`/stats/atualizar/${usuario.id}`, {
-                riot_id: usuario.riot_id  // fallback quando o DB não está disponível
+                riot_id: usuario.riot_id
             });
-            setStats(data.stats);
-            localStorage.setItem(`stats_${usuario.id}`, JSON.stringify(data.stats));
+            mutateStats(data.stats, false);
             toast.success('Stats atualizadas com sucesso!');
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao atualizar stats');
@@ -207,7 +203,8 @@ export default function Perfil() {
             await api.put('/usuarios/me', editForm);
             if (usuario) {
                 const updatedUser = { ...usuario, nome: editForm.nome, riot_id: editForm.riot_id };
-                setUsuario(updatedUser);
+                mutateUsuario(updatedUser, false);
+                setLocalUsuario(updatedUser);
                 localStorage.setItem('usuario', JSON.stringify(updatedUser));
             }
             toast.success('Perfil atualizado!');
