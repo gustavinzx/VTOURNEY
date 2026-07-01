@@ -96,8 +96,23 @@ export async function registrarResultado(req, res) {
             return res.status(400).json({ erro: 'vencedor_id é obrigatório' });
         }
 
-        // Idealmente checar aqui se req.usuario.id é organizador do torneio dono da partida.
-        // Simplificado:
+        // Busca a partida junto com o organizador do torneio dono dela
+        const [partidaRows] = await pool.query(
+            `SELECT p.id, t.organizador_id
+             FROM partidas p
+             JOIN torneios t ON t.id = p.torneio_id
+             WHERE p.id = ?`,
+            [id]
+        );
+
+        if (partidaRows.length === 0) {
+            return res.status(404).json({ erro: 'Partida não encontrada' });
+        }
+
+        if (partidaRows[0].organizador_id !== req.usuario.id) {
+            return res.status(403).json({ erro: 'Apenas o organizador do torneio pode registrar resultados' });
+        }
+
         await pool.query(
             `UPDATE partidas SET placar_a = ?, placar_b = ?, vencedor_id = ?, status = 'finalizada' WHERE id = ?`,
             [placar_a ?? 0, placar_b ?? 0, vencedor_id, id]

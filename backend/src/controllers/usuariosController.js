@@ -23,15 +23,19 @@ export async function cadastrarUsuario(req, res) {
         const senha_hash = await bcrypt.hash(senha, 10);
 
         const [resultado] = await pool.query(
-            `INSERT INTO usuarios (nome, email, senha_hash, riot_id) VALUES (?, ?, ?, ?)`,
-            [nome, email, senha_hash, riot_id || null]
+            `INSERT INTO usuarios (nome, email, senha_hash, riot_id, tipo) VALUES (?, ?, ?, ?, ?)`,
+            [nome, email, senha_hash, riot_id || null, 'jogador']
         );
 
-        const token = jwt.sign({ id: resultado.insertId, email, tipo: 'comum' }, JWT_SECRET, { expiresIn: JWT_EXPIRA_EM });
+        const token = jwt.sign(
+            { id: resultado.insertId, email, tipo: 'jogador' },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRA_EM }
+        );
 
         res.status(201).json({
             mensagem: 'Usuário cadastrado com sucesso',
-            usuario: { id: resultado.insertId, nome, email, riot_id: riot_id || null },
+            usuario: { id: resultado.insertId, nome, email, riot_id: riot_id || null, tipo: 'jogador' },
             token
         });
     } catch (err) {
