@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import { motion } from 'framer-motion';
-import api from '@/lib/api';
 import TimeCard from '@/components/TimeCard';
 
 interface Time {
@@ -23,15 +24,10 @@ const item = {
 };
 
 export default function TimesPage() {
-    const [times, setTimes] = useState<Time[]>([]);
-    const [loading, setLoading] = useState(true);
     const [busca, setBusca] = useState('');
-
-    useEffect(() => {
-        api.get('/times')
-            .then((r) => setTimes(r.data))
-            .finally(() => setLoading(false));
-    }, []);
+    const { data: timesData, error } = useSWR<Time[]>('/times', fetcher);
+    const times = timesData || [];
+    const loading = !timesData && !error;
 
     const filtered = times.filter(
         (t) =>

@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { RadialBarChart, RadialBar, ResponsiveContainer, Tooltip } from 'recharts';
 import api from '@/lib/api';
@@ -100,12 +102,24 @@ export default function Perfil() {
     const [usuario, setUsuario] = useState<Usuario | null>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
     const [stats, setStats] = useState<Stats | null>(null);
-    const [loadingStats, setLoadingStats] = useState(false);
     const [atualizando, setAtualizando] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editForm, setEditForm] = useState({ nome: '', riot_id: '' });
     const [salvando, setSalvando] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
     const router = useRouter();
+
+    const { data: usuarioApi, mutate: mutateUsuario } = useSWR('/usuarios/me', fetcher);
+    
+    // Merge de dados (localStorage + SWR)
+    const currentUser = usuarioApi || usuario;
+    
+    const { data: statsApi, isLoading: loadingStats } = useSWR(
+        currentUser?.id ? `/stats/${currentUser.id}` : null,
+        fetcher
+    );
+    
+    const currentStats = statsApi || stats;
 
     async function handleAvatarSuccess(url: string) {
         setAvatarUrl(url);
@@ -141,47 +155,27 @@ export default function Perfil() {
 
         setUsuario(userObj);
         setAvatarUrl(userObj.avatar_url);
-        buscarStats(userObj.id);
+        // SWR takes over the stats and user fetching
     }, []);
 
-    async function buscarStats(id: number) {
-        setLoadingStats(true);
-        try {
-            // Buscamos o perfil para pegar o banner_preset atualizado
-            const resPerfil = await api.get('/usuarios/me');
-            if (resPerfil.data) {
-                setUsuario(resPerfil.data);
-            }
 
-            const { data } = await api.get(`/stats/${id}`);
-            setStats(data);
-            localStorage.setItem(`stats_${id}`, JSON.stringify(data));
-        } catch {
-            // Fallback para o localStorage se a API falhar (ex: nodemon reiniciou e o DB ta off)
-            const cachedStats = localStorage.getItem(`stats_${id}`);
-            if (cachedStats) {
-                setStats(JSON.parse(cachedStats));
-            } else {
-                setStats(null);
-            }
-        } finally {
-            setLoadingStats(false);
-        }
-    }
 
     async function changeBanner() {
-        if (!usuario) return;
-        const nextPreset = ((usuario.banner_preset ?? 0) + 1) % BANNER_PRESETS.length;
+        if (!currentUser) return;
+        const nextPreset = ((currentUser.banner_preset ?? 0) + 1) % BANNER_PRESETS.length;
         
         // Optimistic update
-        setUsuario({ ...usuario, banner_preset: nextPreset });
+        mutateUsuario({ ...currentUser, banner_preset: nextPreset }, false);
+        setUsuario({ ...currentUser, banner_preset: nextPreset });
         
         try {
             await api.put('/usuarios/me', { banner_preset: nextPreset });
+            mutateUsuario();
             toast.success('Banner atualizado!');
         } catch (err: any) {
             toast.error('Erro ao atualizar banner');
-            setUsuario({ ...usuario, banner_preset: usuario.banner_preset });
+            // Revert on error
+            mutateUsuario();
         }
     }
 

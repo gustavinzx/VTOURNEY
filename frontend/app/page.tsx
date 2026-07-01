@@ -2,6 +2,8 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import { motion } from 'framer-motion';
 import api from '@/lib/api';
 import { AuroraBackground } from '@/components/ui/AuroraBackground';
@@ -87,28 +89,21 @@ function HomeContent() {
 
     const buscaDebounced = useDebounce(busca, 300);
 
-    const [torneios, setTorneios] = useState<Torneio[]>([]);
-    const [loading, setLoading]   = useState(true);
+    const params = new URLSearchParams();
+    if (status)           params.set('status', status);
+    if (buscaDebounced)   params.set('q', buscaDebounced);
+    if (sort !== 'recentes') params.set('sort', sort);
+    const qs = params.toString();
 
-    // Busca torneios sempre que um filtro muda
     useEffect(() => {
-        setLoading(true);
-
-        // Sync URL com os filtros atuais
-        const params = new URLSearchParams();
-        if (status)           params.set('status', status);
-        if (buscaDebounced)   params.set('q', buscaDebounced);
-        if (sort !== 'recentes') params.set('sort', sort);
-        const qs = params.toString();
         router.replace(qs ? `?${qs}` : '/', { scroll: false });
+    }, [qs, router]);
 
-        api.get(`/torneios${qs ? `?${qs}` : ''}`)
-            .then(r => setTorneios(r.data))
-            .catch(() => setTorneios([]))
-            .finally(() => setLoading(false));
-    }, [status, buscaDebounced, sort]);
+    const { data: torneiosData, error } = useSWR<Torneio[]>(`/torneios${qs ? `?${qs}` : ''}`, fetcher);
+    const torneios = torneiosData || [];
+    const loading = !torneiosData && !error;
 
-    const abertos = torneios.filter(t => t.status === 'inscricoes_abertas').length;
+    const abertos = torneios.filter((t: Torneio) => t.status === 'inscricoes_abertas').length;
 
     return (
         <div>

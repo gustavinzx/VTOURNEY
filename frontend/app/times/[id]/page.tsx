@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import Modal from '@/components/Modal';
@@ -51,8 +53,6 @@ export default function TimePerfilPage() {
     const id = params?.id as string;
     const router = useRouter();
 
-    const [time, setTime] = useState<Time | null>(null);
-    const [loading, setLoading] = useState(true);
     const [usuario, setUsuario] = useState<{ id: number } | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [addForm, setAddForm] = useState({ usuario_id: '', funcao: 'titular' });
@@ -74,13 +74,13 @@ export default function TimePerfilPage() {
         if (u) setUsuario(JSON.parse(u));
     }, []);
 
-    useEffect(() => {
-        if (!id) return;
-        api.get(`/times/${id}`)
-            .then((r) => setTime(r.data))
-            .catch(() => { toast.error('Time não encontrado'); router.push('/times'); })
-            .finally(() => setLoading(false));
-    }, [id]);
+    const { data: time, mutate: mutateTime, error } = useSWR<Time>(id ? `/times/${id}` : null, fetcher);
+    const loading = !time && !error;
+
+    if (error) {
+        toast.error('Time não encontrado');
+        router.push('/times');
+    }
 
     async function adicionarMembro() {
         if (!addForm.usuario_id) { toast.error('Informe o ID do usuário'); return; }
@@ -92,9 +92,7 @@ export default function TimePerfilPage() {
             });
             toast.success('Membro adicionado!');
             setModalOpen(false);
-            // Refresh
-            const { data } = await api.get(`/times/${id}`);
-            setTime(data);
+            mutateTime();
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao adicionar membro');
         } finally {

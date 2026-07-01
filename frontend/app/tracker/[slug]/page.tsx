@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { AnimatedList, AnimatedListItem } from '@/components/ui/AnimatedList';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import { useParams } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Share2, Link as LinkIcon, Check } from 'lucide-react';
-import api from '@/lib/api';
 import { toast } from 'sonner';
 
 interface TrackerData {
@@ -45,37 +46,22 @@ type ErrorType = 'rate_limit' | 'not_found' | 'unknown' | null;
 export default function TrackerProfilePage() {
     const params = useParams();
     const slug = params.slug as string;
+    const parts = slug.split('-');
+    const isValid = parts.length >= 2;
+    const tag = isValid ? parts.pop()! : '';
+    const nome = isValid ? parts.join('-') : '';
+    const url = isValid ? `/tracker/${encodeURIComponent(nome)}/${encodeURIComponent(tag)}` : null;
+
+    const { data, error, isLoading: loading } = useSWR<TrackerData>(url, fetcher, {
+        shouldRetryOnError: false
+    });
     
-    const [data, setData] = useState<TrackerData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [errorType, setErrorType] = useState<ErrorType>(null);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    
+    const errorType: ErrorType = !isValid ? 'not_found' : (error?.response?.data?.error?.type || (error ? 'unknown' : null));
+    const errorMsg = !isValid ? 'Riot ID inválido.' : (error?.response?.data?.error?.message || error?.message || 'Erro desconhecido.');
+
     const [filterMode, setFilterMode] = useState<string>('all');
     const [filterAgent, setFilterAgent] = useState<string>('all');
     const [copied, setCopied] = useState(false);
-
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                // Slug format: "nome-tag" where tag is last segment after final "-"
-                const parts = slug.split('-');
-                if (parts.length < 2) throw new Error('Riot ID inválido.');
-                const tag = parts.pop()!;
-                const nome = parts.join('-'); // preserves hyphens in names
-                
-                const res = await api.get(`/tracker/${encodeURIComponent(nome)}/${encodeURIComponent(tag)}`);
-                setData(res.data);
-            } catch (err: any) {
-                const type: ErrorType = err.response?.data?.error?.type || 'unknown';
-                setErrorType(type);
-                setErrorMsg(err.response?.data?.error?.message || err.message || 'Erro desconhecido.');
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchData();
-    }, [slug]);
 
     if (loading) {
         return (

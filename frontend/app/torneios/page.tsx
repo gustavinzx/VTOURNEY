@@ -2,8 +2,9 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import { motion } from 'framer-motion';
-import api from '@/lib/api';
 import TorneioCard from '@/components/TorneioCard';
 import { PlusCircle, Search, Calendar, Users, Trophy } from 'lucide-react';
 
@@ -43,28 +44,20 @@ function TorneiosPageContent() {
     const [sort, setSort] = useState(searchParams.get('sort') ?? 'recentes');
     const buscaDebounced = useDebounce(busca, 300);
 
-    const [torneios, setTorneios] = useState<Torneio[]>([]);
-    const [loading, setLoading] = useState(true);
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (buscaDebounced) params.set('q', buscaDebounced);
+    if (sort !== 'recentes') params.set('sort', sort);
 
+    const qs = params.toString();
+    
     useEffect(() => {
-        setLoading(true);
-        const params = new URLSearchParams();
-        if (status) params.set('status', status);
-        if (buscaDebounced) params.set('q', buscaDebounced);
-        if (sort !== 'recentes') params.set('sort', sort);
-
-        const qs = params.toString();
-        
-        // Atualiza a URL sem recarregar a página
         router.replace(`/torneios${qs ? `?${qs}` : ''}`, { scroll: false });
+    }, [qs, router]);
 
-        api.get(`/torneios${qs ? `?${qs}` : ''}`)
-            .then((res) => {
-                setTorneios(res.data);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
-    }, [status, buscaDebounced, sort, router]);
+    const { data: torneiosData, error } = useSWR<Torneio[]>(`/torneios${qs ? `?${qs}` : ''}`, fetcher);
+    const torneios = torneiosData || [];
+    const loading = !torneiosData && !error;
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8 mt-16">

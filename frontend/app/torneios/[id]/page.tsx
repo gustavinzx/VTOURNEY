@@ -2,6 +2,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import api from '@/lib/api';
@@ -61,11 +63,7 @@ export default function TorneioPage() {
     const id = params?.id as string;
     const router = useRouter();
 
-    const [torneio, setTorneio] = useState<Torneio | null>(null);
-    const [inscricoes, setInscricoes] = useState<Inscricao[]>([]);
     const [meusTimes, setMeusTimes] = useState<Time[]>([]);
-    const [partidas, setPartidas] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTime, setSelectedTime] = useState<number | null>(null);
     const [inscrevendo, setInscrevendo] = useState(false);
@@ -77,29 +75,18 @@ export default function TorneioPage() {
         if (u) setUsuario(JSON.parse(u));
     }, []);
 
-    useEffect(() => {
-        if (!id) return;
+    const { data: torneio, mutate: mutateTorneio, error } = useSWR<Torneio>(id ? `/torneios/${id}` : null, fetcher);
+    const { data: inscricoesData, mutate: mutateInscricoes } = useSWR<Inscricao[]>(id ? `/torneios/${id}/inscricoes` : null, fetcher);
+    const { data: partidasData, mutate: mutatePartidas } = useSWR<any[]>(id ? `/torneios/${id}/partidas` : null, fetcher);
 
-        async function load() {
-            try {
-                const [torneioRes, inscricoesRes, partidasRes] = await Promise.all([
-                    api.get(`/torneios/${id}`),
-                    api.get(`/torneios/${id}/inscricoes`),
-                    api.get(`/torneios/${id}/partidas`).catch(() => ({ data: [] }))
-                ]);
-                setTorneio(torneioRes.data);
-                setInscricoes(inscricoesRes.data);
-                setPartidas(partidasRes.data);
-            } catch {
-                toast.error('Torneio não encontrado');
-                router.push('/');
-            } finally {
-                setLoading(false);
-            }
-        }
+    const inscricoes = inscricoesData || [];
+    const partidas = partidasData || [];
+    const loading = !torneio && !error;
 
-        load();
-    }, [id]);
+    if (error) {
+        toast.error('Torneio não encontrado');
+        router.push('/');
+    }
 
     async function openModal() {
         if (!usuario) { router.push('/login'); return; }
@@ -121,9 +108,7 @@ export default function TorneioPage() {
             await api.post(`/torneios/${id}/inscricoes`, { time_id: selectedTime });
             toast.success('Inscrição realizada! Aguardando aprovação 🎯');
             setModalOpen(false);
-            // Refresh inscricoes
-            const { data } = await api.get(`/torneios/${id}/inscricoes`);
-            setInscricoes(data);
+            mutateInscricoes();
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao inscrever time');
         } finally {
@@ -135,11 +120,9 @@ export default function TorneioPage() {
         try {
             await api.post(`/torneios/${id}/partidas/gerar-bracket`);
             toast.success('Chaveamento gerado com sucesso! 🏆');
-            const { data } = await api.get(`/torneios/${id}/partidas`);
-            setPartidas(data);
+            mutatePartidas();
             
-            // Atualiza status do torneio localmente
-            if (torneio) setTorneio({ ...torneio, status: 'em_andamento' });
+            if (torneio) mutateTorneio({ ...torneio, status: 'em_andamento' }, false);
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao gerar chaveamento');
         }
