@@ -14,8 +14,11 @@ export async function fetchTiers() {
   const now = Date.now();
 
   if (tiersCache && lastFetch && (now - lastFetch) < CACHE_TTL) {
+    console.log('[competitiveTierService] Cache HIT — sem chamada à API externa');
     return tiersCache;
   }
+
+  console.log('[competitiveTierService] Cache MISS — buscando na API valorant-api.com');
 
   try {
     const response = await axios.get('https://valorant-api.com/v1/competitivetiers');

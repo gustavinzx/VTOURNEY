@@ -13,8 +13,11 @@ export async function fetchAgents() {
   const now = Date.now();
 
   if (agentsCache && lastFetch && (now - lastFetch) < CACHE_TTL) {
+    console.log('[agentService] Cache HIT — sem chamada à API externa');
     return agentsCache;
   }
+
+  console.log('[agentService] Cache MISS — buscando na API valorant-api.com');
 
   try {
     const response = await axios.get('https://valorant-api.com/v1/agents', {

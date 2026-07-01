@@ -1,27 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Trophy, Crosshair, Target, Ghost } from 'lucide-react';
 import { AnimatedList, AnimatedListItem } from '@/components/ui/AnimatedList';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import api from '@/lib/api';
-
-interface Match {
-    id: string;
-    mapa: string;
-    modo: string;
-    inicio: number;
-    duracao: number;
-    resultado: 'win' | 'loss' | 'draw';
-    jogador: {
-        agente: string;
-        kills: number;
-        deaths: number;
-        assists: number;
-        score: number;
-    };
-}
 
 interface TrackerData {
     conta: {
@@ -30,13 +13,32 @@ interface TrackerData {
         level: number;
         card_url: string;
     };
-    mmr: {
-        rank: string;
-        elo: number;
-        mmr_change: number;
-    } | null;
-    partidas: Match[];
+    rank: {
+        name: string;
+        icon: string | null;
+        rr: number | null;
+        rrChange: number | null;
+    };
+    matches: {
+        matchId: string;
+        map: string;
+        mode: string;
+        isCompetitive: boolean;
+        result: 'win' | 'loss';
+        agent: { name: string; icon: string | null };
+        stats: { kills: number; deaths: number; assists: number; kd: number } | null;
+        gameStart: number;
+    }[];
+    mapPerformance: {
+        map: string;
+        wins: number;
+        losses: number;
+        total: number;
+        winRate: number;
+    }[];
 }
+
+type ErrorType = 'rate_limit' | 'not_found' | 'unknown' | null;
 
 export default function TrackerProfilePage() {
     const params = useParams();
@@ -44,20 +46,24 @@ export default function TrackerProfilePage() {
     
     const [data, setData] = useState<TrackerData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [errorType, setErrorType] = useState<ErrorType>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     useEffect(() => {
         async function fetchData() {
             try {
+                // Slug format: "nome-tag" where tag is last segment after final "-"
                 const parts = slug.split('-');
                 if (parts.length < 2) throw new Error('Riot ID inválido.');
-                const tag = parts.pop();
-                const nome = parts.join(' ');
+                const tag = parts.pop()!;
+                const nome = parts.join('-'); // preserves hyphens in names
                 
-                const res = await api.get(`/tracker/${nome}/${tag}`);
+                const res = await api.get(`/tracker/${encodeURIComponent(nome)}/${encodeURIComponent(tag)}`);
                 setData(res.data);
             } catch (err: any) {
-                setError(err.response?.data?.erro || 'Jogador não encontrado ou perfil privado.');
+                const type: ErrorType = err.response?.data?.error?.type || 'unknown';
+                setErrorType(type);
+                setErrorMsg(err.response?.data?.error?.message || err.message || 'Erro desconhecido.');
             } finally {
                 setLoading(false);
             }
@@ -68,19 +74,50 @@ export default function TrackerProfilePage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-                <div className="w-12 h-12 border-4 border-zinc-800 border-t-red-600 rounded-full animate-spin" />
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-zinc-800 border-t-red-600 rounded-full animate-spin" />
+                    <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest">Carregando dados do agente...</p>
+                </div>
             </div>
         );
     }
 
-    if (error || !data) {
+    if (errorType || !data) {
+        const banners: Record<string, { title: string; msg: string; icon: string }> = {
+            rate_limit: {
+                title: 'Limite de buscas atingido',
+                msg: 'Muitas buscas em pouco tempo. Aguarde alguns segundos e tente novamente.',
+                icon: '⏳',
+            },
+            not_found: {
+                title: 'Agente Desaparecido',
+                msg: 'Jogador não encontrado. Confere se o Riot ID está certo (Nome#Tag).',
+                icon: '👻',
+            },
+            unknown: {
+                title: 'Erro desconhecido',
+                msg: errorMsg || 'Algo deu errado. Tenta recarregar a página.',
+                icon: '💥',
+            },
+        };
+        const b = banners[errorType || 'unknown'];
         return (
             <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-                <div className="text-center">
-                    <p className="text-6xl mb-4">👻</p>
-                    <h2 className="text-2xl font-bold text-white mb-2 font-chakra uppercase">Agente Desaparecido</h2>
-                    <p className="text-zinc-400">{error}</p>
-                </div>
+                <motion.div
+                    className="text-center max-w-md px-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <p className="text-6xl mb-4">{b.icon}</p>
+                    <h2 className="font-chakra font-black text-2xl text-white uppercase tracking-wider mb-2">{b.title}</h2>
+                    <p className="text-zinc-400">{b.msg}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-6 bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-widest text-sm px-8 py-3 clip-tatico transition-colors"
+                    >
+                        Tentar Novamente
+                    </button>
+                </motion.div>
             </div>
         );
     }
