@@ -95,7 +95,11 @@ export async function getFullTrackerData(name, tag) {
             nome: account.name,
             tag: account.tag,
             level: account.account_level,
-            card_url: account.card?.large || null,
+            // v2/account retorna `card` como UUID string (não objeto)
+            // A URL real da imagem é construída assim:
+            card_url: account.card
+                ? `https://media.valorant-api.com/playercards/${account.card}/largeart.png`
+                : null,
         },
         region,
         rank,

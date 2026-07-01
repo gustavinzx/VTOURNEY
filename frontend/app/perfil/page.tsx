@@ -187,7 +187,9 @@ export default function Perfil() {
         }
         setAtualizando(true);
         try {
-            const { data } = await api.post(`/stats/atualizar/${usuario.id}`);
+            const { data } = await api.post(`/stats/atualizar/${usuario.id}`, {
+                riot_id: usuario.riot_id  // fallback quando o DB não está disponível
+            });
             setStats(data.stats);
             toast.success('Stats atualizadas com sucesso!');
         } catch (err: any) {
