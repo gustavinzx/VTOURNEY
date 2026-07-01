@@ -94,5 +94,5 @@ Pull Requests são muito bem vindos. Ao contribuir com UI, por favor siga a **Re
 > O site deve parecer um jogo feito por quem joga, não um template corporativo. Use cantos cortados (clip-path), cores semânticas (vermelho primário `#FF4655`) e o mínimo necessário de animações para não pesar. Evite fundos brancos.
 
 ## 📝 Licença
-Desenvolvido por Gustavo "gigi" e Antigravity.
+Desenvolvido por Gustavo Silva dos Santos.
 Licenciado sob a [MIT License](LICENSE).
