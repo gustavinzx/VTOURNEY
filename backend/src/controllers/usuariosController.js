@@ -10,10 +10,6 @@ export async function cadastrarUsuario(req, res) {
     try {
         const { nome, email, senha, riot_id } = req.body;
 
-        if (!nome || !email || !senha) {
-            return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios' });
-        }
-
         // Verifica se já existe usuário com esse email
         const [existentes] = await pool.query('SELECT id FROM usuarios WHERE email = ?', [email]);
         if (existentes.length > 0) {
@@ -47,10 +43,6 @@ export async function cadastrarUsuario(req, res) {
 export async function loginUsuario(req, res) {
     try {
         const { email, senha } = req.body;
-
-        if (!email || !senha) {
-            return res.status(400).json({ erro: 'Email e senha são obrigatórios' });
-        }
 
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
         if (rows.length === 0) {

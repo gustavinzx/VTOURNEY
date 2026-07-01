@@ -74,11 +74,8 @@ export async function buscarTorneio(req, res) {
 // POST /api/torneios
 export async function criarTorneio(req, res) {
     try {
-        const { nome, descricao, formato, max_times, organizador_id, data_inicio } = req.body;
-
-        if (!nome || !organizador_id) {
-            return res.status(400).json({ erro: 'Nome e organizador_id são obrigatórios' });
-        }
+        const { nome, descricao, formato, max_times, data_inicio } = req.body;
+        const organizador_id = req.usuario.id;
 
         const [resultado] = await pool.query(
             `INSERT INTO torneios (nome, descricao, formato, max_times, organizador_id, data_inicio)

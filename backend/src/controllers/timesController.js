@@ -57,9 +57,7 @@ export async function criarTime(req, res) {
         const { nome, tag } = req.body;
         const capitao_id = req.usuario.id; // vem do middleware JWT
 
-        if (!nome) {
-            return res.status(400).json({ erro: 'Nome do time é obrigatório' });
-        }
+
 
         const conn = await pool.getConnection();
         try {

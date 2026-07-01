@@ -92,10 +92,6 @@ export async function registrarResultado(req, res) {
         const { id } = req.params;
         const { placar_a, placar_b, vencedor_id } = req.body;
 
-        if (!vencedor_id) {
-            return res.status(400).json({ erro: 'vencedor_id é obrigatório' });
-        }
-
         // Busca a partida junto com o organizador do torneio dono dela
         const [partidaRows] = await pool.query(
             `SELECT p.id, p.torneio_id, p.fase, t.organizador_id
