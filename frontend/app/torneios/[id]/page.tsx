@@ -12,7 +12,7 @@ import TimeCard from '@/components/TimeCard';
 import Modal from '@/components/Modal';
 import TournamentBracket from '@/components/TournamentBracket';
 import ReactMarkdown from 'react-markdown';
-import { Copy, CheckCircle2, Circle } from 'lucide-react';
+import { Copy, CheckCircle2, Circle, X } from 'lucide-react';
 
 interface Torneio {
     id: number;
@@ -70,6 +70,12 @@ export default function TorneioPage() {
     const [usuario, setUsuario] = useState<{ id: number; nome: string } | null>(null);
     const [activeTab, setActiveTab] = useState<'inscricoes' | 'chaveamento'>('inscricoes');
 
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [selectedMatch, setSelectedMatch] = useState<any | null>(null);
+    const [placarA, setPlacarA] = useState(0);
+    const [placarB, setPlacarB] = useState(0);
+    const [reportando, setReportando] = useState(false);
+
     useEffect(() => {
         const u = localStorage.getItem('usuario');
         if (u) setUsuario(JSON.parse(u));
@@ -125,6 +131,54 @@ export default function TorneioPage() {
             if (torneio) mutateTorneio({ ...torneio, status: 'em_andamento' }, false);
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao gerar chaveamento');
+        }
+    }
+
+    async function atualizarInscricao(inscricaoId: number, status: string) {
+        try {
+            await api.patch(`/inscricoes/${inscricaoId}`, { status });
+            toast.success(`Inscrição ${status === 'aprovada' ? 'aprovada' : 'rejeitada'}`);
+            mutateInscricoes();
+        } catch (err: any) {
+            toast.error(err.response?.data?.erro ?? 'Erro ao atualizar inscrição');
+        }
+    }
+
+    function handleMatchClick(match: any) {
+        if (usuario?.id !== torneio?.organizador_id) return;
+        setSelectedMatch(match);
+        setPlacarA(0);
+        setPlacarB(0);
+        setReportModalOpen(true);
+    }
+
+    async function reportarPlacar(e: React.FormEvent) {
+        e.preventDefault();
+        if (!selectedMatch || !selectedMatch.team1 || !selectedMatch.team2) return;
+        
+        let vencedor_id = null;
+        if (placarA > placarB) vencedor_id = selectedMatch.team1.id;
+        else if (placarB > placarA) vencedor_id = selectedMatch.team2.id;
+        else {
+            toast.error('O placar não pode terminar em empate!');
+            return;
+        }
+
+        setReportando(true);
+        try {
+            await api.put(`/partidas/${selectedMatch.id}/resultado`, {
+                placar_a: placarA,
+                placar_b: placarB,
+                vencedor_id: parseInt(vencedor_id)
+            });
+            toast.success('Placar reportado com sucesso!');
+            setReportModalOpen(false);
+            mutatePartidas();
+            if (torneio) mutateTorneio();
+        } catch (err: any) {
+            toast.error(err.response?.data?.erro ?? 'Erro ao reportar placar');
+        } finally {
+            setReportando(false);
         }
     }
 
@@ -378,9 +432,29 @@ export default function TorneioPage() {
                                                 )}
                                             </div>
                                         </div>
-                                        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${inscricaoStatusColor[insc.status] ?? 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'}`}>
-                                            {insc.status}
-                                        </span>
+                                        <div className="flex items-center gap-4">
+                                            <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${inscricaoStatusColor[insc.status] ?? 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'}`}>
+                                                {insc.status}
+                                            </span>
+                                            {isOrganizer && torneio.status === 'inscricoes_abertas' && insc.status === 'pendente' && (
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => atualizarInscricao(insc.id, 'aprovada')}
+                                                        className="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-400 flex items-center justify-center transition-colors"
+                                                        title="Aprovar"
+                                                    >
+                                                        <CheckCircle2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => atualizarInscricao(insc.id, 'rejeitada')}
+                                                        className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-colors"
+                                                        title="Rejeitar"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </motion.div>
                                 ))}
                             </motion.div>
@@ -410,7 +484,7 @@ export default function TorneioPage() {
                                 )}
                             </div>
                         ) : (
-                            <TournamentBracket rounds={roundsData} />
+                            <TournamentBracket rounds={roundsData} onMatchClick={isOrganizer ? handleMatchClick : undefined} />
                         )}
                     </motion.div>
                 )}
@@ -463,6 +537,47 @@ export default function TorneioPage() {
                             )}
                         </button>
                     </>
+                )}
+            </Modal>
+
+            {/* Modal de Reporte de Placar */}
+            <Modal open={reportModalOpen} onClose={() => setReportModalOpen(false)} title="Reportar Placar">
+                {selectedMatch && selectedMatch.team1 && selectedMatch.team2 && (
+                    <form onSubmit={reportarPlacar} className="space-y-6">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 text-center bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
+                                <p className="font-bold text-white mb-2">{selectedMatch.team1.name}</p>
+                                <input 
+                                    type="number" 
+                                    min="0"
+                                    value={placarA} 
+                                    onChange={e => setPlacarA(parseInt(e.target.value) || 0)}
+                                    className="w-16 bg-zinc-950 border border-zinc-700 text-center text-white text-xl font-mono py-2 rounded focus:border-red-600 outline-none"
+                                />
+                            </div>
+                            
+                            <div className="text-zinc-500 font-black text-xl">X</div>
+
+                            <div className="flex-1 text-center bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
+                                <p className="font-bold text-white mb-2">{selectedMatch.team2.name}</p>
+                                <input 
+                                    type="number" 
+                                    min="0"
+                                    value={placarB} 
+                                    onChange={e => setPlacarB(parseInt(e.target.value) || 0)}
+                                    className="w-16 bg-zinc-950 border border-zinc-700 text-center text-white text-xl font-mono py-2 rounded focus:border-red-600 outline-none"
+                                />
+                            </div>
+                        </div>
+                        
+                        <button
+                            type="submit"
+                            disabled={reportando}
+                            className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all"
+                        >
+                            {reportando ? 'Salvando...' : 'Salvar Placar'}
+                        </button>
+                    </form>
                 )}
             </Modal>
         </div>

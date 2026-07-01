@@ -25,6 +25,7 @@ export interface BracketRound {
 
 interface TournamentBracketProps {
     rounds: BracketRound[];
+    onMatchClick?: (match: BracketMatch) => void;
 }
 
 const NODE_WIDTH = 240;
@@ -34,7 +35,7 @@ const ROW_GAP = 40;
 const COLUMN_WIDTH = NODE_WIDTH + COLUMN_GAP;
 const ROW_HEIGHT = NODE_HEIGHT + ROW_GAP;
 
-export default function TournamentBracket({ rounds }: TournamentBracketProps) {
+export default function TournamentBracket({ rounds, onMatchClick }: TournamentBracketProps) {
     const [hoveredMatch, setHoveredMatch] = useState<string | null>(null);
 
     if (!rounds || rounds.length === 0) {
@@ -140,7 +141,7 @@ export default function TournamentBracket({ rounds }: TournamentBracketProps) {
                                     onMouseEnter={() => setHoveredMatch(match.id)}
                                     onMouseLeave={() => setHoveredMatch(null)}
                                 >
-                                    <MatchNode match={match} />
+                                    <MatchNode match={match} onClick={() => onMatchClick && onMatchClick(match)} clickable={!!onMatchClick} />
                                 </div>
                             );
                         })}
@@ -151,15 +152,17 @@ export default function TournamentBracket({ rounds }: TournamentBracketProps) {
     );
 }
 
-function MatchNode({ match }: { match: BracketMatch }) {
+function MatchNode({ match, onClick, clickable }: { match: BracketMatch, onClick?: () => void, clickable?: boolean }) {
     const isLive = match.status === 'live';
+    const canClick = clickable && (isLive || match.status === 'pending') && match.team1 && match.team2;
 
     return (
         <motion.div
-            whileHover={{ scale: 1.02 }}
-            className={`w-full h-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 shadow-lg relative z-10 transition-all cursor-default clip-tatico hover:border-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.2)] flex flex-col justify-center gap-1.5 ${
+            whileHover={canClick ? { scale: 1.02 } : {}}
+            onClick={canClick ? onClick : undefined}
+            className={`w-full h-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 shadow-lg relative z-10 transition-all clip-tatico hover:border-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.2)] flex flex-col justify-center gap-1.5 ${
                 isLive ? 'border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.15)]' : ''
-            }`}
+            } ${canClick ? 'cursor-pointer' : 'cursor-default'}`}
         >
             {isLive && (
                 <div className="absolute -top-2.5 right-4 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.5)]">
