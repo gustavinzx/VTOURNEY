@@ -69,11 +69,33 @@ export async function fetchMatchHistory(region, name, tag, size = 5) {
     }
 }
 
-// ---- Funções legadas usadas pelo statsController (sincronização de perfil) ----
-// Mantidas para compatibilidade — usam o novo fetchAccount internamente
+// ----- Funções legadas compatíveis com statsController e outros controladores -----
 
 export async function buscarConta(nome, tag) {
     return fetchAccount(nome, tag);
+}
+
+// buscarMMR: mantida para não quebrar statsController.js
+// Internamente usa fetchCurrentRank (v3/mmr, não depreciado)
+export async function buscarMMR(nome, tag, regiao = 'br') {
+    // Precisamos da região real do jogador para chamar o v3/mmr
+    let region = regiao;
+    try {
+        const account = await fetchAccount(nome, tag);
+        region = account.region || regiao;
+    } catch {
+        // fallback para a região passada
+    }
+    const rank = await fetchCurrentRank(region, nome, tag);
+    // Retorna no formato que statsController espera: { current_data: { currenttierpatched } }
+    return rank ? {
+        current_data: {
+            currenttierpatched: rank.tierName,
+            currenttier: rank.tierId,
+            ranking_in_tier: rank.rr,
+            mmr_change_to_last_game: rank.rrChange,
+        }
+    } : null;
 }
 
 export async function buscarEstatisticasAgregadas(nome, tag, regiao = 'br') {
