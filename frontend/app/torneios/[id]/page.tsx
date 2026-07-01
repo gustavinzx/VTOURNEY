@@ -358,7 +358,30 @@ export default function TorneioPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <TournamentBracket matches={[]} />
+                        <TournamentBracket rounds={[
+                            {
+                                title: 'Quartas de Final',
+                                matches: [
+                                    { id: 'q1', nextMatchId: 's1', status: 'finished', team1: { id: 't1', name: 'LOUD', score: 13, isWinner: true }, team2: { id: 't2', name: 'Leviatán', score: 9 } },
+                                    { id: 'q2', nextMatchId: 's1', status: 'finished', team1: { id: 't3', name: 'KRÜ', score: 11 }, team2: { id: 't4', name: 'Sentinels', score: 13, isWinner: true } },
+                                    { id: 'q3', nextMatchId: 's2', status: 'finished', team1: { id: 't5', name: 'MIBR', score: 13, isWinner: true }, team2: { id: 't6', name: 'NRG', score: 10 } },
+                                    { id: 'q4', nextMatchId: 's2', status: 'finished', team1: { id: 't7', name: 'FURIA', score: 7 }, team2: { id: 't8', name: 'C9', score: 13, isWinner: true } }
+                                ]
+                            },
+                            {
+                                title: 'Semifinais',
+                                matches: [
+                                    { id: 's1', nextMatchId: 'f1', status: 'live', team1: { id: 't1', name: 'LOUD', score: 9 }, team2: { id: 't4', name: 'Sentinels', score: 12 } },
+                                    { id: 's2', nextMatchId: 'f1', status: 'pending', team1: { id: 't5', name: 'MIBR', score: null }, team2: { id: 't8', name: 'C9', score: null } }
+                                ]
+                            },
+                            {
+                                title: 'Grande Final',
+                                matches: [
+                                    { id: 'f1', nextMatchId: null, status: 'pending', team1: null, team2: null }
+                                ]
+                            }
+                        ]} />
                     </motion.div>
                 )}
             </div>

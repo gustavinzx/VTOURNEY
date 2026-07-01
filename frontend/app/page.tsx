@@ -129,8 +129,6 @@ function HomeContent() {
                             <BlurText
                                 text="Domine o"
                                 delay={50}
-                                animateBy="words"
-                                direction="top"
                             />
                             <GlitchText text="Cenário Amador" className="text-red-500" />
                         </h1>

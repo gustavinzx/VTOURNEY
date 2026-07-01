@@ -1,22 +1,43 @@
 'use client';
 
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
-interface Match {
-    id: number;
-    team1: string;
-    team2: string;
-    score1: number;
-    score2: number;
-    winner: 1 | 2 | null;
+export interface BracketTeam {
+    id: string;
+    name: string;
+    score: number | null;
+    isWinner?: boolean;
+}
+
+export interface BracketMatch {
+    id: string;
+    nextMatchId: string | null;
+    team1: BracketTeam | null;
+    team2: BracketTeam | null;
+    status: 'pending' | 'live' | 'finished';
+}
+
+export interface BracketRound {
+    title: string;
+    matches: BracketMatch[];
 }
 
 interface TournamentBracketProps {
-    matches: Match[];
+    rounds: BracketRound[];
 }
 
-export default function TournamentBracket({ matches }: TournamentBracketProps) {
-    if (!matches || matches.length === 0) {
+const NODE_WIDTH = 240;
+const NODE_HEIGHT = 80;
+const COLUMN_GAP = 80;
+const ROW_GAP = 40;
+const COLUMN_WIDTH = NODE_WIDTH + COLUMN_GAP;
+const ROW_HEIGHT = NODE_HEIGHT + ROW_GAP;
+
+export default function TournamentBracket({ rounds }: TournamentBracketProps) {
+    const [hoveredMatch, setHoveredMatch] = useState<string | null>(null);
+
+    if (!rounds || rounds.length === 0) {
         return (
             <div className="border border-dashed border-zinc-800 rounded-2xl p-12 text-center text-zinc-500">
                 A chave do torneio ainda não foi gerada.
@@ -24,66 +45,153 @@ export default function TournamentBracket({ matches }: TournamentBracketProps) {
         );
     }
 
-    // A very simple static SVG bracket for visual representation
+    // Calcular altura e largura total do SVG
+    const maxMatchesInRound = Math.max(...rounds.map((r) => r.matches.length));
+    const totalHeight = maxMatchesInRound * ROW_HEIGHT + ROW_GAP;
+    const totalWidth = rounds.length * COLUMN_WIDTH;
+
+    // Gerar conexões (linhas SVG)
+    const connections: { id: string; d: string; sourceMatchId: string; targetMatchId: string }[] = [];
+
+    rounds.forEach((round, rIndex) => {
+        if (rIndex === rounds.length - 1) return; // Última rodada não tem nextMatch
+        round.matches.forEach((match, mIndex) => {
+            if (!match.nextMatchId) return;
+
+            // Encontrar o target na próxima rodada
+            const nextRound = rounds[rIndex + 1];
+            const targetMatchIndex = nextRound.matches.findIndex((m) => m.id === match.nextMatchId);
+            
+            if (targetMatchIndex === -1) return;
+
+            // Coordenadas Origem
+            const x1 = rIndex * COLUMN_WIDTH + NODE_WIDTH;
+            const y1 = ROW_HEIGHT * (mIndex * (2 ** rIndex) + (2 ** rIndex - 1) / 2) + NODE_HEIGHT / 2;
+
+            // Coordenadas Destino
+            const x2 = (rIndex + 1) * COLUMN_WIDTH;
+            const y2 = ROW_HEIGHT * (targetMatchIndex * (2 ** (rIndex + 1)) + (2 ** (rIndex + 1) - 1) / 2) + NODE_HEIGHT / 2;
+
+            const midX = (x1 + x2) / 2;
+
+            const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+
+            connections.push({
+                id: `${match.id}-${match.nextMatchId}`,
+                d,
+                sourceMatchId: match.id,
+                targetMatchId: match.nextMatchId,
+            });
+        });
+    });
+
     return (
-        <div className="overflow-x-auto pb-4">
-            <div className="min-w-[800px] h-[400px] relative">
+        <div className="overflow-x-auto pb-4 custom-scrollbar">
+            <div
+                className="relative"
+                style={{ width: totalWidth, height: totalHeight, minWidth: '800px' }}
+            >
                 {/* SVG Lines */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-                    <path d="M 200 100 L 250 100 L 250 200 L 300 200" fill="none" stroke="#3f3f46" strokeWidth="2" strokeDasharray="4 4" />
-                    <path d="M 200 300 L 250 300 L 250 200 L 300 200" fill="none" stroke="#3f3f46" strokeWidth="2" strokeDasharray="4 4" />
-                    <path d="M 500 200 L 600 200" fill="none" stroke="#3f3f46" strokeWidth="2" strokeDasharray="4 4" />
+                    {connections.map((conn) => {
+                        const isHovered = hoveredMatch === conn.sourceMatchId || hoveredMatch === conn.targetMatchId;
+                        return (
+                            <motion.path
+                                key={conn.id}
+                                d={conn.d}
+                                fill="none"
+                                stroke={isHovered ? '#ef4444' : '#3f3f46'}
+                                strokeWidth={isHovered ? 3 : 2}
+                                strokeDasharray={isHovered ? '0' : '4 4'}
+                                animate={{
+                                    stroke: isHovered ? '#ef4444' : '#3f3f46',
+                                    strokeWidth: isHovered ? 3 : 2,
+                                }}
+                                transition={{ duration: 0.3 }}
+                                className={isHovered ? 'drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]' : ''}
+                            />
+                        );
+                    })}
                 </svg>
 
-                {/* Quarter Finals */}
-                <div className="absolute left-0 top-[60px] w-[200px]">
-                    <MatchNode match={matches[0]} />
-                </div>
-                <div className="absolute left-0 top-[260px] w-[200px]">
-                    <MatchNode match={matches[1]} />
-                </div>
+                {/* Match Nodes */}
+                {rounds.map((round, rIndex) => (
+                    <React.Fragment key={round.title}>
+                        {/* Título da Rodada */}
+                        <div
+                            className="absolute text-center w-[240px] text-zinc-500 font-bold uppercase tracking-widest text-xs"
+                            style={{
+                                left: rIndex * COLUMN_WIDTH,
+                                top: 0,
+                            }}
+                        >
+                            {round.title}
+                        </div>
 
-                {/* Semi Finals */}
-                <div className="absolute left-[300px] top-[160px] w-[200px]">
-                    <MatchNode match={matches[2]} />
-                </div>
+                        {round.matches.map((match, mIndex) => {
+                            const x = rIndex * COLUMN_WIDTH;
+                            const y = ROW_HEIGHT * (mIndex * (2 ** rIndex) + (2 ** rIndex - 1) / 2) + 30; // +30 for title offset
 
-                {/* Final */}
-                <div className="absolute left-[600px] top-[160px] w-[200px]">
-                    <div className="text-red-500 font-bold text-xs uppercase tracking-wider mb-2 text-center animate-pulse">
-                        Grand Final
-                    </div>
-                    <MatchNode match={matches[3]} />
-                </div>
+                            return (
+                                <div
+                                    key={match.id}
+                                    className="absolute"
+                                    style={{ left: x, top: y, width: NODE_WIDTH, height: NODE_HEIGHT }}
+                                    onMouseEnter={() => setHoveredMatch(match.id)}
+                                    onMouseLeave={() => setHoveredMatch(null)}
+                                >
+                                    <MatchNode match={match} />
+                                </div>
+                            );
+                        })}
+                    </React.Fragment>
+                ))}
             </div>
         </div>
     );
 }
 
-function MatchNode({ match }: { match?: Match }) {
-    if (!match) {
+function MatchNode({ match }: { match: BracketMatch }) {
+    const isLive = match.status === 'live';
+
+    return (
+        <motion.div
+            whileHover={{ scale: 1.02 }}
+            className={`w-full h-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 shadow-lg relative z-10 transition-all cursor-default clip-tatico hover:border-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.2)] flex flex-col justify-center gap-1.5 ${
+                isLive ? 'border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.15)]' : ''
+            }`}
+        >
+            {isLive && (
+                <div className="absolute -top-2.5 right-4 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.5)]">
+                    Live
+                </div>
+            )}
+            
+            <TeamRow team={match.team1} />
+            <div className="h-px w-full bg-zinc-800/80 my-0.5" />
+            <TeamRow team={match.team2} />
+        </motion.div>
+    );
+}
+
+function TeamRow({ team }: { team: BracketTeam | null }) {
+    if (!team) {
         return (
-            <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-3 w-full animate-pulse">
-                <div className="h-6 bg-zinc-800 rounded mb-2 w-3/4"></div>
-                <div className="h-6 bg-zinc-800 rounded w-1/2"></div>
+            <div className="flex justify-between items-center px-2 py-1">
+                <span className="text-zinc-600 italic text-sm">TBD</span>
+                <span className="text-zinc-700 font-mono text-sm">-</span>
             </div>
         );
     }
 
     return (
-        <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="bg-[var(--bg-surface)] border border-zinc-700 rounded p-2 shadow-lg relative z-10 transition-colors hover:border-red-500 hover:shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer"
-        >
-            <div className={`flex justify-between items-center p-1 rounded ${match.winner === 1 ? 'bg-zinc-800 font-bold text-white' : 'text-zinc-400'}`}>
-                <span>{match.team1}</span>
-                <span className="font-mono">{match.score1}</span>
-            </div>
-            <div className="h-px bg-zinc-700 my-1" />
-            <div className={`flex justify-between items-center p-1 rounded ${match.winner === 2 ? 'bg-zinc-800 font-bold text-white' : 'text-zinc-400'}`}>
-                <span>{match.team2}</span>
-                <span className="font-mono">{match.score2}</span>
-            </div>
-        </motion.div>
+        <div className={`flex justify-between items-center px-2 py-1 rounded ${team.isWinner ? 'bg-zinc-800/80' : ''}`}>
+            <span className={`text-sm truncate font-medium ${team.isWinner ? 'text-white font-bold' : 'text-zinc-400'}`}>
+                {team.name}
+            </span>
+            <span className={`font-mono text-sm ml-3 ${team.isWinner ? 'text-red-400 font-bold' : 'text-zinc-500'}`}>
+                {team.score !== null ? team.score : '-'}
+            </span>
+        </div>
     );
 }
