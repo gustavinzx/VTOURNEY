@@ -98,7 +98,7 @@ export async function registrarResultado(req, res) {
 
         // Busca a partida junto com o organizador do torneio dono dela
         const [partidaRows] = await pool.query(
-            `SELECT p.id, t.organizador_id
+            `SELECT p.id, p.torneio_id, p.fase, t.organizador_id
              FROM partidas p
              JOIN torneios t ON t.id = p.torneio_id
              WHERE p.id = ?`,
@@ -109,7 +109,9 @@ export async function registrarResultado(req, res) {
             return res.status(404).json({ erro: 'Partida não encontrada' });
         }
 
-        if (partidaRows[0].organizador_id !== req.usuario.id) {
+        const partida = partidaRows[0];
+
+        if (partida.organizador_id !== req.usuario.id) {
             return res.status(403).json({ erro: 'Apenas o organizador do torneio pode registrar resultados' });
         }
 
@@ -117,6 +119,43 @@ export async function registrarResultado(req, res) {
             `UPDATE partidas SET placar_a = ?, placar_b = ?, vencedor_id = ?, status = 'finalizada' WHERE id = ?`,
             [placar_a ?? 0, placar_b ?? 0, vencedor_id, id]
         );
+
+        // Lógica de progressão do torneio
+        const [partidasFase] = await pool.query(
+            `SELECT id, vencedor_id FROM partidas WHERE torneio_id = ? AND fase = ? ORDER BY id ASC`,
+            [partida.torneio_id, partida.fase]
+        );
+
+        const todasFinalizadas = partidasFase.every(p => p.vencedor_id !== null);
+
+        if (todasFinalizadas) {
+            if (partidasFase.length === 1) {
+                // Última partida (Final), encerra o torneio
+                await pool.query(`UPDATE torneios SET status = 'finalizado' WHERE id = ?`, [partida.torneio_id]);
+            } else {
+                // Gera a próxima fase ligando os vencedores 2 a 2
+                // Se a string da fase não tiver número, assume Fase 2
+                const currentNumber = parseInt(partida.fase.replace(/\D/g, ''));
+                const nextFaseNumber = isNaN(currentNumber) ? 2 : currentNumber + 1;
+                const nextFaseNome = `Fase ${nextFaseNumber}`;
+
+                for (let i = 0; i < partidasFase.length; i += 2) {
+                    const timeA = partidasFase[i];
+                    const timeB = partidasFase[i + 1] || null;
+
+                    // Se timeB for null (bye técnico), a partida já nasce finalizada com timeA vencedor
+                    const isBye = !timeB;
+                    const v_id = isBye ? timeA.vencedor_id : null;
+                    const p_status = isBye ? 'finalizada' : 'agendada';
+
+                    await pool.query(
+                        `INSERT INTO partidas (torneio_id, fase, time_a_id, time_b_id, vencedor_id, status)
+                         VALUES (?, ?, ?, ?, ?, ?)`,
+                        [partida.torneio_id, nextFaseNome, timeA.vencedor_id, timeB?.vencedor_id || null, v_id, p_status]
+                    );
+                }
+            }
+        }
 
         res.json({ mensagem: 'Resultado registrado com sucesso' });
     } catch (err) {

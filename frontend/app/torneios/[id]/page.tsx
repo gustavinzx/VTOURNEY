@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -144,6 +144,41 @@ export default function TorneioPage() {
             toast.error(err.response?.data?.erro ?? 'Erro ao gerar chaveamento');
         }
     }
+
+    const roundsData = useMemo(() => {
+        if (!partidas || partidas.length === 0) return [];
+        
+        const grouped = partidas.reduce((acc, p) => {
+            if (!acc[p.fase]) acc[p.fase] = [];
+            acc[p.fase].push(p);
+            return acc;
+        }, {} as Record<string, any[]>);
+        
+        const phases = Object.keys(grouped).sort((a, b) => {
+            const numA = parseInt(a.replace(/\D/g, '')) || 1;
+            const numB = parseInt(b.replace(/\D/g, '')) || 1;
+            return numA - numB;
+        });
+
+        return phases.map((fase, idx) => {
+            const nextFaseName = phases[idx + 1];
+            const nextFaseMatches = nextFaseName ? grouped[nextFaseName] : [];
+
+            return {
+                title: fase,
+                matches: grouped[fase].map((p: any, i: number) => {
+                    const nextMatch = nextFaseMatches[Math.floor(i / 2)];
+                    return {
+                        id: p.id.toString(),
+                        nextMatchId: nextMatch ? nextMatch.id.toString() : null,
+                        status: p.status === 'agendada' ? 'pending' : (p.status === 'finalizada' ? 'finished' : 'live'),
+                        team1: p.time_a_id ? { id: p.time_a_id.toString(), name: p.time_a_nome, score: p.placar_a, isWinner: p.vencedor_id === p.time_a_id } : null,
+                        team2: p.time_b_id ? { id: p.time_b_id.toString(), name: p.time_b_nome, score: p.placar_b, isWinner: p.vencedor_id === p.time_b_id } : null
+                    };
+                })
+            };
+        });
+    }, [partidas]);
 
     if (loading) {
         return (
@@ -392,18 +427,7 @@ export default function TorneioPage() {
                                 )}
                             </div>
                         ) : (
-                            <TournamentBracket rounds={[
-                                {
-                                    title: 'Primeira Fase',
-                                    matches: partidas.map(p => ({
-                                        id: p.id.toString(),
-                                        nextMatchId: null, // TODO: próxima fase
-                                        status: p.status === 'agendada' ? 'pending' : (p.status === 'finalizada' ? 'finished' : 'live'),
-                                        team1: p.time_a_id ? { id: p.time_a_id.toString(), name: p.time_a_nome, score: p.placar_a, isWinner: p.vencedor_id === p.time_a_id } : null,
-                                        team2: p.time_b_id ? { id: p.time_b_id.toString(), name: p.time_b_nome, score: p.placar_b, isWinner: p.vencedor_id === p.time_b_id } : null
-                                    }))
-                                }
-                            ]} />
+                            <TournamentBracket rounds={roundsData} />
                         )}
                     </motion.div>
                 )}
