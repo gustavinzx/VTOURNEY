@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ const formatos = [
     { value: 'pontos_corridos',    label: 'Pontos corridos',    desc: 'Todos jogam contra todos.' },
 ];
 
-export default function CriarTorneio() {
+function CriarTorneioForm() {
     const [form, setForm] = useState({
         nome: '',
         descricao: '',
@@ -25,6 +25,26 @@ export default function CriarTorneio() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    
+    const searchParams = useSearchParams();
+    const cloneId = searchParams.get('clone');
+
+    useEffect(() => {
+        if (cloneId) {
+            api.get(`/torneios/${cloneId}`).then(res => {
+                if (res.data) {
+                    setForm({
+                        nome: `${res.data.nome} (Cópia)`,
+                        descricao: res.data.descricao || '',
+                        formato: res.data.formato,
+                        max_times: res.data.max_times,
+                    });
+                }
+            }).catch(err => {
+                toast.error('Erro ao carregar dados do torneio para clonar');
+            });
+        }
+    }, [cloneId]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -211,5 +231,13 @@ export default function CriarTorneio() {
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function CriarTorneio() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-zinc-950 flex items-center justify-center"><div className="skeleton w-64 h-64"></div></div>}>
+            <CriarTorneioForm />
+        </Suspense>
     );
 }

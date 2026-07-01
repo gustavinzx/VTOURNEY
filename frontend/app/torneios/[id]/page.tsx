@@ -9,6 +9,8 @@ import StatusBadge from '@/components/StatusBadge';
 import TimeCard from '@/components/TimeCard';
 import Modal from '@/components/Modal';
 import TournamentBracket from '@/components/TournamentBracket';
+import ReactMarkdown from 'react-markdown';
+import { Copy, CheckCircle2, Circle } from 'lucide-react';
 
 interface Torneio {
     id: number;
@@ -142,6 +144,18 @@ export default function TorneioPage() {
 
     const aprovados = inscricoes.filter((i) => i.status === 'aprovada');
     const pct = Math.round((aprovados.length / torneio.max_times) * 100);
+    const isOrganizer = usuario?.id === torneio.organizador_id;
+
+    const getCountdown = (dateStr: string | null | undefined) => {
+        if (!dateStr) return 'A definir';
+        const diff = new Date(dateStr).getTime() - new Date().getTime();
+        if (diff <= 0) return 'Iniciado';
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        if (days > 0) return `Em ${days}d ${hours}h`;
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        return `Em ${hours}h ${minutes}m`;
+    };
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -165,9 +179,20 @@ export default function TorneioPage() {
                 <div className="relative z-10">
                     <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                         <div>
-                            <p className="text-red-400 text-xs font-bold tracking-[0.3em] uppercase mb-2">
-                                Torneio #{torneio.id}
-                            </p>
+                            <div className="flex items-center gap-3 mb-2">
+                                <p className="text-red-400 text-xs font-bold tracking-[0.3em] uppercase">
+                                    Torneio #{torneio.id}
+                                </p>
+                                {isOrganizer && (
+                                    <button 
+                                        onClick={() => router.push(`/torneios/criar?clone=${torneio.id}`)}
+                                        className="flex items-center gap-1.5 text-zinc-500 hover:text-white transition-colors bg-zinc-900 px-2 py-1 rounded border border-zinc-800 text-[10px] uppercase font-bold tracking-wider"
+                                        title="Duplicar torneio (Item 126)"
+                                    >
+                                        <Copy size={12} /> Duplicar
+                                    </button>
+                                )}
+                            </div>
                             <h1 className="text-3xl md:text-4xl font-black text-white" style={{ fontFamily: 'var(--font-chakra), sans-serif' }}>
                                 {torneio.nome}
                             </h1>
@@ -176,7 +201,10 @@ export default function TorneioPage() {
                     </div>
 
                     {torneio.descricao && (
-                        <p className="text-zinc-400 text-sm mb-6 max-w-xl">{torneio.descricao}</p>
+                        <div className="text-zinc-400 text-sm mb-6 max-w-2xl prose prose-invert prose-p:leading-relaxed prose-a:text-red-400">
+                            {/* Render Markdown (Item 128) */}
+                            <ReactMarkdown>{torneio.descricao}</ReactMarkdown>
+                        </div>
                     )}
 
                     {/* Info grid */}
@@ -185,11 +213,20 @@ export default function TorneioPage() {
                             { label: 'Formato', value: formatoLabel[torneio.formato] ?? torneio.formato },
                             { label: 'Organizador', value: torneio.organizador_nome ?? '—' },
                             { label: 'Times', value: `${aprovados.length} / ${torneio.max_times}` },
-                            { label: 'Início', value: torneio.data_inicio ? new Date(torneio.data_inicio).toLocaleDateString('pt-BR') : 'A definir' },
+                            { 
+                                label: 'Início', 
+                                value: torneio.data_inicio ? new Date(torneio.data_inicio).toLocaleDateString('pt-BR') : 'A definir',
+                                highlight: getCountdown(torneio.data_inicio) // Contagem regressiva (Item 129)
+                            },
                         ].map((info) => (
-                            <div key={info.label} className="bg-zinc-800/50 rounded-xl p-3">
+                            <div key={info.label} className="bg-zinc-800/50 rounded-xl p-3 flex flex-col justify-between">
                                 <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">{info.label}</p>
-                                <p className="text-white font-semibold text-sm">{info.value}</p>
+                                <div>
+                                    <p className="text-white font-semibold text-sm">{info.value}</p>
+                                    {info.highlight && info.highlight !== 'Iniciado' && info.highlight !== 'A definir' && (
+                                        <p className="text-red-400 text-[10px] font-bold uppercase tracking-wider mt-1">{info.highlight}</p>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -209,6 +246,27 @@ export default function TorneioPage() {
                             />
                         </div>
                     </div>
+
+                    {/* Checklist Organizador (Item 127) */}
+                    {isOrganizer && (torneio.status === 'criado' || torneio.status === 'inscricoes_abertas') && (
+                        <div className="mb-6 bg-zinc-950/50 border border-zinc-800 p-4 rounded-xl">
+                            <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold mb-3">Checklist de Início</p>
+                            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                                <div className="flex items-center gap-2 text-sm">
+                                    {aprovados.length >= 2 ? <CheckCircle2 size={16} className="text-green-500" /> : <Circle size={16} className="text-zinc-600" />}
+                                    <span className={aprovados.length >= 2 ? 'text-zinc-300' : 'text-zinc-500'}>Times confirmados ({aprovados.length}/2 mín)</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                    {torneio.data_inicio ? <CheckCircle2 size={16} className="text-green-500" /> : <Circle size={16} className="text-zinc-600" />}
+                                    <span className={torneio.data_inicio ? 'text-zinc-300' : 'text-zinc-500'}>Horário definido</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                    {torneio.descricao ? <CheckCircle2 size={16} className="text-green-500" /> : <Circle size={16} className="text-zinc-600" />}
+                                    <span className={torneio.descricao ? 'text-zinc-300' : 'text-zinc-500'}>Regras publicadas</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* CTA */}
                     {torneio.status === 'inscricoes_abertas' && (

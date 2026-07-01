@@ -17,7 +17,6 @@ interface Stats {
     kd_ratio: string;
     win_rate: string;
     headshot_pct: string;
-    headshot_pct: string;
     partidas_analisadas: number;
     atualizado_em: string;
     badges?: {
