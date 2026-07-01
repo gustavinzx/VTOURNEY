@@ -1,72 +1,98 @@
-# VTourney 🏆
-
-Plataforma premium para torneios de Valorant, com sistema de estatísticas, tracker sincronizado e gerador de badges automático. Construído com **Next.js**, **TailwindCSS** e **Node.js/Express**, utilizando a temática tática inspirada no HUD oficial do jogo.
-
-## Estrutura do Projeto
-
-O repositório é um monorepo dividido em duas partes principais:
-- `/frontend`: Aplicação Web feita em Next.js (App Router), React e Framer Motion.
-- `/backend`: API RESTful feita em Node.js (ESM), Express e conectada às APIs oficiais/públicas do Valorant (HenrikDev).
+<div align="center">
+  <img src="https://raw.githubusercontent.com/gustavinzx/VTOURNEY/main/frontend/public/icon.png" alt="VTourney Logo" width="120" />
+  <h1>VTourney 🏆</h1>
+  <p><strong>A plataforma definitiva para gerenciar e competir no cenário amador de Valorant.</strong></p>
+</div>
 
 ---
 
-## 🚀 Como Inicializar o Projeto Localmente
+Uma plataforma premium para organização de torneios de Valorant, com sistema de estatísticas reais, tracker sincronizado e UX inspirada na interface tática oficial da Riot Games. Desenvolvido para entregar uma experiência "esports-ready" com animações fluidas, dados em tempo real e micro-interações mecânicas.
+
+## 🚀 Principais Features
+
+- **Autenticação e Perfis:** Crie sua conta, vincule seu Riot ID e sincronize automaticamente seus status reais (K/D, Win Rate, Rank).
+- **VTourney Tracker:** Um tracker próprio completo. Filtre seu desempenho por mapa, agente e modo de jogo. Veja o histórico de partidas com indicadores táticos.
+- **Gestão de Times:** Crie sua line-up, convide jogadores (titulares e reservas) e exiba sua tag nos torneios.
+- **Ecossistema de Torneios:** Crie campeonatos, defina limite de times, aprove equipes e veja a contagem regressiva para o início. Use Markdown para regras bonitas!
+- **UI/UX Tática (Glassmorphism & VCT):** Botões chanfrados (`clip-tatico`), efeitos Glitch, Glow baseado em Rank (Radiante brilha dourado!), spinners mecânicos de carregamento e blur text.
+
+## 🛠️ Stack Tecnológico
+
+**Frontend:**
+- [Next.js 14](https://nextjs.org/) (App Router)
+- [React 18](https://react.dev/)
+- [TailwindCSS](https://tailwindcss.com/) (Utilitários avançados e efeitos customizados)
+- [Framer Motion](https://www.framer.com/motion/) (Animações e transições de página)
+- *ReactBits* & *Aceternity UI* (Efeitos visuais)
+- *Recharts* (Gráficos de performance)
+
+**Backend:**
+- Node.js & [Express](https://expressjs.com/)
+- [MySQL](https://www.mysql.com/) (com driver mysql2/promise)
+- Autenticação via JWT (JSON Web Tokens)
+- [Cloudinary](https://cloudinary.com/) (Armazenamento de imagens)
+- [HenrikDev API](https://docs.henrikdev.xyz/) (Provedor não-oficial de dados do Valorant)
+
+---
+
+## ⚙️ Como Inicializar o Projeto Localmente
+
+O repositório é um monorepo contendo tanto a API quanto a aplicação web. Siga os passos abaixo:
 
 ### Pré-requisitos
-Certifique-se de ter instalado:
-- **Node.js** (v18 ou superior)
-- **NPM** ou **Yarn**
+- **Node.js** (v18+)
+- **MySQL** (rodando localmente ou em nuvem)
+- Uma chave da **Valorant API (HenrikDev)** (opcional para algumas requisições básicas com rate-limit generoso, mas recomendada).
 
 ### Passo 1: Configurando o Backend (API)
-1. Abra um terminal e navegue até a pasta do backend:
+
+1. Entre na pasta do servidor e instale as dependências:
    ```bash
    cd backend
-   ```
-2. Instale as dependências:
-   ```bash
    npm install
    ```
-3. Crie um arquivo `.env` na raiz da pasta `backend/` e preencha as chaves necessárias (banco de dados, JWT, chaves da API do Valorant, etc):
-   ```env
-   PORT=5000
-   VALORANT_API_KEY=sua_chave_aqui
-   # ...outras variaveis (ex: DATABASE_URL, JWT_SECRET)
+
+2. Crie e configure as variáveis de ambiente baseadas no `.env.example`:
+   ```bash
+   cp .env.example .env
    ```
-4. Inicie o servidor em modo de desenvolvimento:
+   *Edite o arquivo `.env` gerado e preencha suas credenciais do MySQL, Cloudinary e a chave JWT.*
+
+3. Execute o script SQL para criar as tabelas no seu MySQL:
+   *(Consulte o código/scripts de db no projeto para a estrutura das tabelas)*
+
+4. Rode o servidor:
    ```bash
    npm run dev
    ```
-   > O backend estará rodando na porta `5000`.
+   > O backend estará rodando em `http://localhost:3001`
 
 ### Passo 2: Configurando o Frontend (Web)
-1. Abra um NOVO terminal e navegue até a pasta do frontend:
+
+1. Em um novo terminal, vá para a pasta da web:
    ```bash
    cd frontend
-   ```
-2. Instale as dependências:
-   ```bash
    npm install
    ```
-3. Crie um arquivo `.env.local` na raiz da pasta `frontend/` com a URL do backend:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:5000/api
+
+2. Crie um arquivo `.env.local` na raiz de `frontend/` com a URL do backend:
+   ```bash
+   echo "NEXT_PUBLIC_API_URL=http://localhost:3001" > .env.local
    ```
-4. Inicie o Next.js em modo de desenvolvimento:
+
+3. Inicie o servidor frontend:
    ```bash
    npm run dev
    ```
-   > O frontend estará disponível em `http://localhost:3000`.
+   > A aplicação estará disponível em `http://localhost:3000`
 
 ---
 
-## 🎨 Design & Estética (Premium Tactical)
+## 🎨 Contribuindo
 
-O sistema utiliza a temática "Glassmorphism" com a estética VCT (Valorant Champions Tour):
-- Componentes chanfrados (CSS Clip Path).
-- Glow dinâmico de cores baseadas nos resultados (Verde pra Win, Vermelho pra Loss).
-- Scanlines, micro-interações mecânicas e painéis texturizados.
+Pull Requests são muito bem vindos. Ao contribuir com UI, por favor siga a **Regra de Ouro da Estética do Projeto**:
+> O site deve parecer um jogo feito por quem joga, não um template corporativo. Use cantos cortados (clip-path), cores semânticas (vermelho primário `#FF4655`) e o mínimo necessário de animações para não pesar. Evite fundos brancos.
 
-## ⚙️ Tecnologias Principais
-- **Frontend**: React 18, Next.js 14, TailwindCSS, Framer Motion, Lucide React, CMDK.
-- **Backend**: Node.js, Express, Axios.
-- **Integração de Dados**: HenrikDev API, Tracker Services.
+## 📝 Licença
+Desenvolvido por Gustavo "gigi" e Antigravity.
+Licenciado sob a [MIT License](LICENSE).
