@@ -4,7 +4,9 @@ import { AnimatedList, AnimatedListItem } from '@/components/ui/AnimatedList';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Share2, Link as LinkIcon, Check } from 'lucide-react';
 import api from '@/lib/api';
+import { toast } from 'sonner';
 
 interface TrackerData {
     conta: {
@@ -48,6 +50,10 @@ export default function TrackerProfilePage() {
     const [loading, setLoading] = useState(true);
     const [errorType, setErrorType] = useState<ErrorType>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    
+    const [filterMode, setFilterMode] = useState<string>('all');
+    const [filterAgent, setFilterAgent] = useState<string>('all');
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
@@ -122,6 +128,37 @@ export default function TrackerProfilePage() {
         );
     }
 
+    const filteredMatches = data.matches?.filter((m: any) => {
+        if (filterMode !== 'all' && m.mode !== filterMode) return false;
+        if (filterAgent !== 'all' && m.agent.name !== filterAgent) return false;
+        return true;
+    }) || [];
+
+    const availableModes = Array.from(new Set(data.matches?.map((m: any) => m.mode) || []));
+    const availableAgents = Array.from(new Set(data.matches?.map((m: any) => m.agent.name) || []));
+
+    // Calculate streak from all matches (not just filtered)
+    let streak = null;
+    if (data.matches && data.matches.length > 0) {
+        const firstType = data.matches[0].result;
+        let count = 1;
+        for (let i = 1; i < data.matches.length; i++) {
+            if (data.matches[i].result === firstType) count++;
+            else break;
+        }
+        if (firstType === 'win' || firstType === 'loss') {
+            streak = { type: firstType, count };
+        }
+    }
+
+    const handleShare = () => {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        toast.success('Link do perfil copiado!');
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <div className="min-h-screen bg-[var(--bg-base)] pb-20 relative">
             <div className="absolute inset-0 scanlines opacity-30 pointer-events-none" />
@@ -152,8 +189,15 @@ export default function TrackerProfilePage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
                     >
-                        <h1 className="font-chakra font-black text-4xl md:text-5xl text-white uppercase tracking-wider">
+                        <h1 className="font-chakra font-black text-4xl md:text-5xl text-white uppercase tracking-wider flex items-center gap-4">
                             {data.conta.nome}
+                            <button
+                                onClick={handleShare}
+                                className="text-zinc-500 hover:text-white transition-colors bg-zinc-900 hover:bg-zinc-800 p-2 rounded-full border border-zinc-800"
+                                title="Compartilhar Perfil"
+                            >
+                                {copied ? <Check size={20} className="text-green-500" /> : <Share2 size={20} />}
+                            </button>
                         </h1>
                         <p className="text-red-400 font-mono text-lg mt-1">#{data.conta.tag} <span className="text-zinc-500 ml-2 text-sm uppercase font-sans">Nível <AnimatedCounter value={data.conta.level} duration={2} /></span></p>
                     </motion.div>
@@ -196,6 +240,19 @@ export default function TrackerProfilePage() {
                                 <p className={`text-sm mt-1 font-bold ${data.rank.rrChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                     {data.rank.rrChange >= 0 ? '▲' : '▼'} {Math.abs(data.rank.rrChange)} última partida
                                 </p>
+                            )}
+                            
+                            {/* Streak Indicator (Item 117) */}
+                            {streak && streak.count >= 2 && (
+                                <div className={`inline-flex items-center gap-1.5 mt-3 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                                    streak.type === 'win' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                }`}>
+                                    <span className="relative flex h-2 w-2">
+                                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${streak.type === 'win' ? 'bg-green-400' : 'bg-red-400'}`}></span>
+                                      <span className={`relative inline-flex rounded-full h-2 w-2 ${streak.type === 'win' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                    </span>
+                                    {streak.count} {streak.type === 'win' ? 'Vitórias' : 'Derrotas'} Seguidas
+                                </div>
                             )}
                         </div>
                     </div>
@@ -247,13 +304,40 @@ export default function TrackerProfilePage() {
 
                 {/* Right Column (Matches) */}
                 <div className="md:col-span-2">
-                    <h3 className="font-chakra font-black text-2xl text-white uppercase mb-6 tracking-wider flex items-center gap-3">
-                        <span className="w-8 h-1 bg-red-600 block"></span>
-                        Últimas Partidas
-                    </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <h3 className="font-chakra font-black text-2xl text-white uppercase tracking-wider flex items-center gap-3">
+                            <span className="w-8 h-1 bg-red-600 block"></span>
+                            Últimas Partidas
+                        </h3>
+
+                        {/* Filters (Items 115, 116) */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <select 
+                                value={filterMode} 
+                                onChange={(e) => setFilterMode(e.target.value)}
+                                className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm px-3 py-1.5 focus:border-red-500 outline-none rounded clip-tatico transition-colors"
+                            >
+                                <option value="all">Todos os Modos</option>
+                                {availableModes.map(m => (
+                                    <option key={m} value={m}>{m}</option>
+                                ))}
+                            </select>
+
+                            <select 
+                                value={filterAgent} 
+                                onChange={(e) => setFilterAgent(e.target.value)}
+                                className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm px-3 py-1.5 focus:border-red-500 outline-none rounded clip-tatico transition-colors"
+                            >
+                                <option value="all">Todos os Agentes</option>
+                                {availableAgents.map(a => (
+                                    <option key={a} value={a}>{a}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                     
                     <AnimatedList className="space-y-3">
-                        {data.matches?.map((match: any) => {
+                        {filteredMatches.map((match: any) => {
                             if (!match.stats) return null;
                             const kd = match.stats.deaths > 0 ? (match.stats.kills / match.stats.deaths).toFixed(2) : match.stats.kills;
                             
@@ -310,8 +394,8 @@ export default function TrackerProfilePage() {
                             );
                         })}
                         
-                        {(!data.matches || data.matches.length === 0) && (
-                            <p className="text-zinc-500 text-center py-12">Nenhuma partida recente encontrada.</p>
+                        {filteredMatches.length === 0 && (
+                            <p className="text-zinc-500 text-center py-12">Nenhuma partida encontrada com os filtros atuais.</p>
                         )}
                     </AnimatedList>
                 </div>

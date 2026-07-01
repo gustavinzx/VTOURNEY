@@ -156,8 +156,15 @@ export default function Perfil() {
 
             const { data } = await api.get(`/stats/${id}`);
             setStats(data);
+            localStorage.setItem(`stats_${id}`, JSON.stringify(data));
         } catch {
-            setStats(null);
+            // Fallback para o localStorage se a API falhar (ex: nodemon reiniciou e o DB ta off)
+            const cachedStats = localStorage.getItem(`stats_${id}`);
+            if (cachedStats) {
+                setStats(JSON.parse(cachedStats));
+            } else {
+                setStats(null);
+            }
         } finally {
             setLoadingStats(false);
         }
@@ -191,6 +198,7 @@ export default function Perfil() {
                 riot_id: usuario.riot_id  // fallback quando o DB não está disponível
             });
             setStats(data.stats);
+            localStorage.setItem(`stats_${usuario.id}`, JSON.stringify(data.stats));
             toast.success('Stats atualizadas com sucesso!');
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao atualizar stats');
