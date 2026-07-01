@@ -57,6 +57,17 @@ export default function TimePerfilPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [addForm, setAddForm] = useState({ usuario_id: '', funcao: 'titular' });
     const [adicionando, setAdicionando] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+
+    async function deletarTime() {
+        try {
+            await api.delete(`/times/${id}`);
+            toast.success('Time excluído com sucesso.');
+            router.push('/times');
+        } catch (err: any) {
+            toast.error(err.response?.data?.erro ?? 'Erro ao excluir time');
+        }
+    }
 
     useEffect(() => {
         const u = localStorage.getItem('usuario');
@@ -165,13 +176,32 @@ export default function TimePerfilPage() {
                     </div>
 
                     {isCapitao && (
-                        <button
-                            id="btn-adicionar-membro"
-                            onClick={() => setModalOpen(true)}
-                            className="shrink-0 border border-red-600/50 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-                        >
-                            + Membro
-                        </button>
+                        <div className="shrink-0 flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    if (confirmDelete) deletarTime();
+                                    else {
+                                        setConfirmDelete(true);
+                                        setTimeout(() => setConfirmDelete(false), 3000);
+                                    }
+                                }}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                                    confirmDelete 
+                                        ? 'bg-red-600 text-white animate-pulse' 
+                                        : 'border border-zinc-800 text-zinc-400 hover:text-red-400 hover:border-red-400/50'
+                                }`}
+                                title="Item 51: Confirmação dupla em ação destrutiva"
+                            >
+                                {confirmDelete ? 'Confirmar Exclusão' : 'Excluir Time'}
+                            </button>
+                            <button
+                                id="btn-adicionar-membro"
+                                onClick={() => setModalOpen(true)}
+                                className="border border-red-600/50 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                            >
+                                + Membro
+                            </button>
+                        </div>
                     )}
                 </div>
             </motion.div>

@@ -106,83 +106,53 @@ export default function Cadastro() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-zinc-400 text-xs mb-1.5 uppercase tracking-wider font-medium">
-                                Nome
-                            </label>
-                            <input
-                                id="cadastro-nome"
-                                type="text"
-                                value={form.nome}
-                                onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-white rounded-xl px-4 py-3 outline-none transition-all text-sm placeholder:text-zinc-600"
-                                placeholder="Seu nome"
-                                required
-                            />
-                        </div>
+                        <TacticalInput
+                            id="cadastro-nome"
+                            type="text"
+                            label="Nome"
+                            value={form.nome}
+                            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                            placeholder="Seu nome"
+                            required
+                        />
 
-                        <div>
-                            <label className="block text-zinc-400 text-xs mb-1.5 uppercase tracking-wider font-medium">
-                                Email
-                            </label>
-                            <input
-                                id="cadastro-email"
-                                type="email"
-                                value={form.email}
-                                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-white rounded-xl px-4 py-3 outline-none transition-all text-sm placeholder:text-zinc-600"
-                                placeholder="seu@email.com"
-                                required
-                            />
-                        </div>
+                        <TacticalInput
+                            id="cadastro-email"
+                            type="email"
+                            label="Email"
+                            value={form.email}
+                            onChange={(e) => setForm({ ...form, email: e.target.value })}
+                            placeholder="seu@email.com"
+                            required
+                        />
 
-                        <div>
-                            <label className="block text-zinc-400 text-xs mb-1.5 uppercase tracking-wider font-medium">
-                                Senha
-                            </label>
-                            <input
-                                id="cadastro-senha"
-                                type="password"
-                                value={form.senha}
-                                onChange={(e) => setForm({ ...form, senha: e.target.value })}
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-white rounded-xl px-4 py-3 outline-none transition-all text-sm placeholder:text-zinc-600"
-                                placeholder="••••••••"
-                                required
-                            />
-                        </div>
+                        <TacticalInput
+                            id="cadastro-senha"
+                            type="password"
+                            label="Senha"
+                            value={form.senha}
+                            onChange={(e) => setForm({ ...form, senha: e.target.value })}
+                            placeholder="••••••••"
+                            required
+                        />
 
-                        <div>
-                            <label className="block text-zinc-400 text-xs mb-1.5 uppercase tracking-wider font-medium">
-                                Riot ID{' '}
-                                <span className="text-zinc-600 normal-case tracking-normal font-normal">
-                                    (ex: Nome#TAG)
-                                </span>
-                            </label>
-                            <input
-                                id="cadastro-riot-id"
-                                type="text"
-                                value={form.riot_id}
-                                onChange={(e) => setForm({ ...form, riot_id: e.target.value })}
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-white rounded-xl px-4 py-3 outline-none transition-all text-sm placeholder:text-zinc-600 font-mono"
-                                placeholder="Nome#TAG"
-                            />
-                        </div>
+                        <TacticalInput
+                            id="cadastro-riot-id"
+                            type="text"
+                            label="Riot ID"
+                            value={form.riot_id}
+                            onChange={(e) => setForm({ ...form, riot_id: e.target.value })}
+                            placeholder="smth like you#gigi"
+                            className="font-mono"
+                        />
 
-                        <button
+                        <TacticalButton
                             id="cadastro-submit"
                             type="submit"
-                            disabled={loading}
-                            className="w-full bg-red-600 text-white font-bold py-3 px-4 clip-tatico hover:bg-red-500 transition-colors disabled:opacity-50 uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                            loading={loading}
                         >
-                            {loading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Criando conta...
-                                </span>
-                            ) : (
-                                'Criar conta'
-                            )}
-                        </button>
+                            Criar conta
+                        </TacticalButton>
                     </form>
 
                     <p className="text-center text-zinc-500 text-sm mt-6">
