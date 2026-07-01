@@ -32,11 +32,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Toaster
                     theme="dark"
                     position="bottom-right"
+                    richColors
+                    closeButton
                     toastOptions={{
+                        duration: 3500,
                         style: {
-                            background: '#18181b',
-                            border: '1px solid #3f3f46',
-                            color: '#fafafa',
+                            fontFamily: 'var(--font-inter), Inter, sans-serif',
                         },
                     }}
                 />
