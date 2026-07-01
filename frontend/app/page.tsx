@@ -125,8 +125,13 @@ function HomeContent() {
 
                 <div className="max-w-6xl mx-auto px-4 py-24 md:py-32 grid grid-cols-1 md:grid-cols-12 gap-12 items-center relative z-10">
                     <div className="md:col-span-7">
-                        <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-wider mb-6 leading-none" style={{ fontFamily: 'var(--font-chakra), sans-serif' }}>
-                            Domine o <br />
+                        <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-wider mb-6 leading-none flex flex-col items-start gap-2" style={{ fontFamily: 'var(--font-chakra), sans-serif' }}>
+                            <BlurText
+                                text="Domine o"
+                                delay={50}
+                                animateBy="words"
+                                direction="top"
+                            />
                             <GlitchText text="Cenário Amador" className="text-red-500" />
                         </h1>
                         <p className="text-zinc-400 text-lg md:text-xl max-w-lg mb-10 leading-relaxed">

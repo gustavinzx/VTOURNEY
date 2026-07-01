@@ -17,8 +17,13 @@ export const TacticalButton = React.forwardRef<HTMLButtonElement, TacticalButton
                 className={`relative w-full bg-red-600 text-white font-bold py-3 px-4 clip-tatico hover:bg-red-500 transition-colors disabled:opacity-50 uppercase tracking-widest text-sm overflow-hidden group ${className}`}
                 {...props}
             >
-                <div className={`transition-opacity duration-200 ${loading ? 'opacity-0' : 'opacity-100'}`}>
+                <div className={`transition-opacity duration-200 relative z-10 ${loading ? 'opacity-0' : 'opacity-100'}`}>
                     {children}
+                </div>
+                
+                {/* Shiny Effect Overlay */}
+                <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-150%)] group-hover:[transform:skew(-12deg)_translateX(150%)] transition-transform duration-700 pointer-events-none">
+                    <div className="relative h-full w-8 bg-white/20" />
                 </div>
                 
                 {/* Linear loader (tactical bar style) */}
