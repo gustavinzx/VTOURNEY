@@ -25,3 +25,13 @@ export function autenticar(req, res, next) {
         return res.status(401).json({ erro: 'Token inválido ou expirado' });
     }
 }
+
+/**
+ * Middleware que protege rotas restritas a administradores
+ */
+export function requireAdmin(req, res, next) {
+    if (req.usuario?.tipo !== 'admin') {
+        return res.status(403).json({ erro: 'Acesso restrito a administradores' });
+    }
+    next();
+}

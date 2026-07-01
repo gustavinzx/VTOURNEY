@@ -64,6 +64,7 @@ export default function TorneioPage() {
     const [torneio, setTorneio] = useState<Torneio | null>(null);
     const [inscricoes, setInscricoes] = useState<Inscricao[]>([]);
     const [meusTimes, setMeusTimes] = useState<Time[]>([]);
+    const [partidas, setPartidas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTime, setSelectedTime] = useState<number | null>(null);
@@ -81,12 +82,14 @@ export default function TorneioPage() {
 
         async function load() {
             try {
-                const [torneioRes, inscricoesRes] = await Promise.all([
+                const [torneioRes, inscricoesRes, partidasRes] = await Promise.all([
                     api.get(`/torneios/${id}`),
                     api.get(`/torneios/${id}/inscricoes`),
+                    api.get(`/torneios/${id}/partidas`).catch(() => ({ data: [] }))
                 ]);
                 setTorneio(torneioRes.data);
                 setInscricoes(inscricoesRes.data);
+                setPartidas(partidasRes.data);
             } catch {
                 toast.error('Torneio não encontrado');
                 router.push('/');
@@ -125,6 +128,20 @@ export default function TorneioPage() {
             toast.error(err.response?.data?.erro ?? 'Erro ao inscrever time');
         } finally {
             setInscrevendo(false);
+        }
+    }
+
+    async function gerarBracket() {
+        try {
+            await api.post(`/torneios/${id}/partidas/gerar-bracket`);
+            toast.success('Chaveamento gerado com sucesso! 🏆');
+            const { data } = await api.get(`/torneios/${id}/partidas`);
+            setPartidas(data);
+            
+            // Atualiza status do torneio localmente
+            if (torneio) setTorneio({ ...torneio, status: 'em_andamento' });
+        } catch (err: any) {
+            toast.error(err.response?.data?.erro ?? 'Erro ao gerar chaveamento');
         }
     }
 
@@ -358,30 +375,36 @@ export default function TorneioPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <TournamentBracket rounds={[
-                            {
-                                title: 'Quartas de Final',
-                                matches: [
-                                    { id: 'q1', nextMatchId: 's1', status: 'finished', team1: { id: 't1', name: 'LOUD', score: 13, isWinner: true }, team2: { id: 't2', name: 'Leviatán', score: 9 } },
-                                    { id: 'q2', nextMatchId: 's1', status: 'finished', team1: { id: 't3', name: 'KRÜ', score: 11 }, team2: { id: 't4', name: 'Sentinels', score: 13, isWinner: true } },
-                                    { id: 'q3', nextMatchId: 's2', status: 'finished', team1: { id: 't5', name: 'MIBR', score: 13, isWinner: true }, team2: { id: 't6', name: 'NRG', score: 10 } },
-                                    { id: 'q4', nextMatchId: 's2', status: 'finished', team1: { id: 't7', name: 'FURIA', score: 7 }, team2: { id: 't8', name: 'C9', score: 13, isWinner: true } }
-                                ]
-                            },
-                            {
-                                title: 'Semifinais',
-                                matches: [
-                                    { id: 's1', nextMatchId: 'f1', status: 'live', team1: { id: 't1', name: 'LOUD', score: 9 }, team2: { id: 't4', name: 'Sentinels', score: 12 } },
-                                    { id: 's2', nextMatchId: 'f1', status: 'pending', team1: { id: 't5', name: 'MIBR', score: null }, team2: { id: 't8', name: 'C9', score: null } }
-                                ]
-                            },
-                            {
-                                title: 'Grande Final',
-                                matches: [
-                                    { id: 'f1', nextMatchId: null, status: 'pending', team1: null, team2: null }
-                                ]
-                            }
-                        ]} />
+                        {partidas.length === 0 ? (
+                            <div className="border border-dashed border-zinc-800 rounded-2xl p-12 text-center flex flex-col items-center">
+                                <p className="text-zinc-500 mb-4">O chaveamento deste torneio ainda não foi gerado.</p>
+                                {usuario?.id === torneio?.organizador_id && torneio?.status === 'inscricoes_abertas' && (
+                                    <button
+                                        onClick={gerarBracket}
+                                        disabled={inscricoes.filter(i => i.status === 'aprovada').length < 2}
+                                        className="bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Gerar Bracket
+                                    </button>
+                                )}
+                                {usuario?.id === torneio?.organizador_id && inscricoes.filter(i => i.status === 'aprovada').length < 2 && (
+                                    <p className="text-xs text-red-400 mt-2">É necessário pelo menos 2 times aprovados.</p>
+                                )}
+                            </div>
+                        ) : (
+                            <TournamentBracket rounds={[
+                                {
+                                    title: 'Primeira Fase',
+                                    matches: partidas.map(p => ({
+                                        id: p.id.toString(),
+                                        nextMatchId: null, // TODO: próxima fase
+                                        status: p.status === 'agendada' ? 'pending' : (p.status === 'finalizada' ? 'finished' : 'live'),
+                                        team1: p.time_a_id ? { id: p.time_a_id.toString(), name: p.time_a_nome, score: p.placar_a, isWinner: p.vencedor_id === p.time_a_id } : null,
+                                        team2: p.time_b_id ? { id: p.time_b_id.toString(), name: p.time_b_nome, score: p.placar_b, isWinner: p.vencedor_id === p.time_b_id } : null
+                                    }))
+                                }
+                            ]} />
+                        )}
                     </motion.div>
                 )}
             </div>

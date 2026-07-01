@@ -1,10 +1,10 @@
 import express from 'express';
 import { refreshCache } from '../services/agentService.js';
+import { autenticar, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// TODO: Add requireAdmin middleware if implemented in the future
-router.post('/refresh-agents', async (req, res) => {
+router.post('/refresh-agents', autenticar, requireAdmin, async (req, res) => {
   try {
     const updated = await refreshCache();
     res.json({ success: true, total: Object.keys(updated).length });

@@ -7,12 +7,17 @@ import {
     deletarTorneio
 } from '../controllers/torneiosController.js';
 
+import { autenticar } from '../middleware/auth.js';
+
 const router = Router();
 
+// Rotas públicas
 router.get('/', listarTorneios);
 router.get('/:id', buscarTorneio);
-router.post('/', criarTorneio);
-router.put('/:id', atualizarTorneio);
-router.delete('/:id', deletarTorneio);
+
+// Rotas protegidas
+router.post('/', autenticar, criarTorneio);
+router.put('/:id', autenticar, atualizarTorneio);
+router.delete('/:id', autenticar, deletarTorneio);
 
 export default router;

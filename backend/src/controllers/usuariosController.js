@@ -27,7 +27,7 @@ export async function cadastrarUsuario(req, res) {
             [nome, email, senha_hash, riot_id || null]
         );
 
-        const token = jwt.sign({ id: resultado.insertId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRA_EM });
+        const token = jwt.sign({ id: resultado.insertId, email, tipo: 'comum' }, JWT_SECRET, { expiresIn: JWT_EXPIRA_EM });
 
         res.status(201).json({
             mensagem: 'Usuário cadastrado com sucesso',
@@ -60,7 +60,7 @@ export async function loginUsuario(req, res) {
             return res.status(401).json({ erro: 'Email ou senha inválidos' });
         }
 
-        const token = jwt.sign({ id: usuario.id, email: usuario.email }, JWT_SECRET, { expiresIn: JWT_EXPIRA_EM });
+        const token = jwt.sign({ id: usuario.id, email: usuario.email, tipo: usuario.tipo }, JWT_SECRET, { expiresIn: JWT_EXPIRA_EM });
 
         res.json({
             mensagem: 'Login realizado com sucesso',

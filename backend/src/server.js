@@ -10,6 +10,7 @@ import inscricoesRoutes from './routes/inscricoes.js';
 import avatarRoutes from './routes/avatar.js';
 import trackerRoutes from './routes/trackerRoutes.js';
 import adminRoutes from './routes/admin.js';
+import partidasRoutes from './routes/partidas.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(express.json());
 
 app.use('/api/torneios', torneiosRoutes);
 app.use('/api/torneios/:torneio_id/inscricoes', inscricoesRoutes);
+app.use('/api/torneios/:torneio_id/partidas', partidasRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/usuarios', avatarRoutes);
 app.use('/api/stats', statsRoutes);

@@ -98,6 +98,14 @@ export async function atualizarTorneio(req, res) {
         const { id } = req.params;
         const { nome, descricao, status, data_inicio, data_fim } = req.body;
 
+        const [torneio] = await pool.query('SELECT organizador_id FROM torneios WHERE id = ?', [id]);
+        if (torneio.length === 0) {
+            return res.status(404).json({ erro: 'Torneio não encontrado' });
+        }
+        if (torneio[0].organizador_id !== req.usuario.id) {
+            return res.status(403).json({ erro: 'Você não tem permissão para editar este torneio' });
+        }
+
         const [resultado] = await pool.query(
             `UPDATE torneios
              SET nome = COALESCE(?, nome),
@@ -122,6 +130,15 @@ export async function atualizarTorneio(req, res) {
 export async function deletarTorneio(req, res) {
     try {
         const { id } = req.params;
+
+        const [torneio] = await pool.query('SELECT organizador_id FROM torneios WHERE id = ?', [id]);
+        if (torneio.length === 0) {
+            return res.status(404).json({ erro: 'Torneio não encontrado' });
+        }
+        if (torneio[0].organizador_id !== req.usuario.id) {
+            return res.status(403).json({ erro: 'Você não tem permissão para deletar este torneio' });
+        }
+
         const [resultado] = await pool.query('DELETE FROM torneios WHERE id = ?', [id]);
 
         if (resultado.affectedRows === 0) {
