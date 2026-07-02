@@ -17,10 +17,21 @@ git clone <URL_DO_REPOSITORIO>
 cd valorant-tourney
 ```
 
-### 3. Configurando as Variáveis de Ambiente (.env)
-Como as chaves de segurança e senhas do banco de dados ficam ocultas, você não vai baixá-las ao fazer o clone. Peça ao administrador do projeto as duas chaves de ambiente:
-1. **No Backend:** Crie um arquivo chamado `.env` dentro da pasta `backend` e cole as variáveis (conexão com Aiven Cloud MySQL, JWT Secret, etc).
-2. **No Frontend:** Crie um arquivo chamado `.env.local` dentro da pasta `frontend` e cole as variáveis (link da API, etc).
+### 3. Configurando o Banco de Dados e Variáveis de Ambiente (.env)
+
+Você tem duas opções para o Banco de Dados:
+
+**Opção A: Usar o mesmo banco de dados do criador (Recomendado para testar junto)**
+Peça ao administrador do projeto as chaves de ambiente e crie os arquivos:
+1. **No Backend:** Crie um arquivo `.env` dentro da pasta `backend` com a conexão online.
+2. **No Frontend:** Crie um arquivo `.env.local` dentro da pasta `frontend`.
+
+**Opção B: Criar seu próprio Banco de Dados Local (Para desenvolvimento isolado)**
+1. Tenha o MySQL instalado na sua máquina (XAMPP, MySQL Workbench, etc).
+2. Crie um banco de dados vazio: `CREATE DATABASE valorant_tourney;`
+3. Importe a estrutura das tabelas usando o arquivo de dump que está em `backend/sql/schema.sql`.
+4. Crie o arquivo `.env` no `backend` apontando para o seu `localhost`.
+5. Crie o arquivo `.env.local` no `frontend`.
 
 ### 4. Instalando e Iniciando o Backend
 Abra um terminal, acesse a pasta do backend, instale os pacotes e inicie o servidor:
