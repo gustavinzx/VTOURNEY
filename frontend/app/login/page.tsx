@@ -20,7 +20,8 @@ export default function Login() {
             const { data } = await api.post('/usuarios/login', form);
             localStorage.setItem('token', data.token);
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
-            toast.success('Bem-vindo de volta! 🎯');
+            window.dispatchEvent(new Event('localStorageChange'));
+            toast.success('Login bem-sucedido! Bem-vindo de volta.');
             router.push('/perfil');
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao fazer login');
@@ -32,19 +33,16 @@ export default function Login() {
     return (
         <div className="min-h-[calc(100vh-57px)] grid grid-cols-1 lg:grid-cols-2">
             {/* ── Left panel ─── */}
-            <div className="hidden lg:flex relative overflow-hidden bg-[var(--bg-base)] items-center justify-center border-r border-zinc-800/50">
+            <div className="hidden lg:flex relative overflow-hidden bg-zinc-950 items-center justify-center border-r border-zinc-800/50">
                 <div className="absolute inset-0">
-                    <div className="absolute inset-0 scanlines opacity-30" />
-                    <div className="absolute inset-0 bg-gradient-to-tr from-red-600/10 to-transparent" />
-                    {/* Grid */}
-                    <div
-                        className="absolute inset-0 opacity-10"
-                        style={{
-                            backgroundImage:
-                                'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
-                            backgroundSize: '32px 32px',
-                        }}
+                    <img 
+                        src="/bg-auth.png" 
+                        alt="Valorant Heroes" 
+                        className="absolute w-full h-full object-cover opacity-60"
                     />
+                    <div className="absolute inset-0 scanlines opacity-40 mix-blend-overlay" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 to-transparent" />
                 </div>
 
                 <div className="relative z-10 text-center px-12 max-w-sm">

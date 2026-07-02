@@ -11,24 +11,35 @@ import avatarRoutes from './routes/avatar.js';
 import trackerRoutes from './routes/trackerRoutes.js';
 import adminRoutes from './routes/admin.js';
 import partidasRoutes from './routes/partidas.js';
+import discordRoutes from './routes/discord.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',');
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (server-to-server, curl, etc.)
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        callback(new Error('CORS: Origem não permitida'));
+    },
+    credentials: true,
+}));
 app.use(express.json());
 
 app.use('/api/torneios', torneiosRoutes);
 app.use('/api/torneios/:torneio_id/inscricoes', inscricoesRoutes);
 app.use('/api/torneios/:torneio_id/partidas', partidasRoutes);
 app.use('/api/usuarios', usuariosRoutes);
-app.use('/api/usuarios', avatarRoutes);
+app.use('/api/usuarios', avatarRoutes);        // POST /api/usuarios/me/avatar
 app.use('/api/stats', statsRoutes);
 app.use('/api/times', timesRoutes);
 app.use('/api/tracker', trackerRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/discord', discordRoutes);
 
 app.get('/', (req, res) => {
     res.json({ status: 'API Valorant Tourney rodando 🎯' });

@@ -60,7 +60,7 @@ export async function loginUsuario(req, res) {
 
         res.json({
             mensagem: 'Login realizado com sucesso',
-            usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, riot_id: usuario.riot_id, tipo: usuario.tipo, avatar_url: usuario.avatar_url, banner_preset: usuario.banner_preset },
+            usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, riot_id: usuario.riot_id, tipo: usuario.tipo, avatar_url: usuario.avatar_url, banner_preset: usuario.banner_preset, riot_id_verified: !!usuario.riot_id_verified, discord_id: usuario.discord_id },
             token
         });
     } catch (err) {
@@ -72,7 +72,7 @@ export async function loginUsuario(req, res) {
 export async function buscarPerfil(req, res) {
     try {
         const [rows] = await pool.query(
-            'SELECT id, nome, email, riot_id, tipo, avatar_url, banner_preset, criado_em FROM usuarios WHERE id = ?',
+            'SELECT id, nome, email, riot_id, tipo, avatar_url, banner_preset, riot_id_verified, discord_id, criado_em FROM usuarios WHERE id = ?',
             [req.usuario.id]
         );
 

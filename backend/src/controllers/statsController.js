@@ -35,12 +35,10 @@ async function syncUserStats(usuario_id, riot_id_fallback) {
         return rows[0] || null;
     });
 
-    if (dbUser) {
-        if (!dbUser) {
-            throw new Error('Usuário não encontrado');
-        }
-        riot_id = dbUser.riot_id || riot_id;
+    if (!dbUser) {
+        throw new Error('Usuário não encontrado');
     }
+    riot_id = dbUser.riot_id || riot_id;
 
     if (!riot_id) {
         throw new Error('Riot ID não encontrado. Preencha Nome#Tag no seu perfil.');
@@ -117,6 +115,12 @@ async function syncUserStats(usuario_id, riot_id_fallback) {
 export async function atualizarStats(req, res) {
     try {
         const { usuario_id } = req.params;
+
+        // Segurança: só o próprio usuário ou admin pode atualizar as stats
+        if (parseInt(usuario_id) !== req.usuario.id && req.usuario.tipo !== 'admin') {
+            return res.status(403).json({ erro: 'Você só pode atualizar suas próprias stats' });
+        }
+
         const riot_id = req.body?.riot_id || null;
         
         const statsObj = await syncUserStats(usuario_id, riot_id);

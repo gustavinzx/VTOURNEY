@@ -24,22 +24,33 @@ export default function Navbar() {
     useEffect(() => {
         const u = localStorage.getItem('usuario');
         if (u) {
-            const parsed = JSON.parse(u);
-            const userObj = parsed.usuario || parsed;
-            if (!userObj.id) {
+            try {
+                const parsed = JSON.parse(u);
+                const userObj = parsed.usuario || parsed;
+                if (!userObj.id) {
+                    localStorage.removeItem('usuario');
+                    localStorage.removeItem('token');
+                } else {
+                    setUsuario(userObj);
+                }
+            } catch {
                 localStorage.removeItem('usuario');
                 localStorage.removeItem('token');
-            } else {
-                setUsuario(userObj);
             }
         }
         
         function handleStorage() {
             const u = localStorage.getItem('usuario');
             if (u) {
-                const parsed = JSON.parse(u);
-                const userObj = parsed.usuario || parsed;
-                if (userObj.id) setUsuario(userObj);
+                try {
+                    const parsed = JSON.parse(u);
+                    const userObj = parsed.usuario || parsed;
+                    if (userObj.id) setUsuario(userObj);
+                } catch {
+                    localStorage.removeItem('usuario');
+                }
+            } else {
+                setUsuario(null);
             }
         }
         

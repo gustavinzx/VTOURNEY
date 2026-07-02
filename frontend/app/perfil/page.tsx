@@ -14,6 +14,8 @@ import ShinyText from '@/components/ui/ShinyText';
 import AvatarUpload from '@/components/AvatarUpload';
 import { Swords, Target, ShieldCheck, Zap, Crown } from 'lucide-react';
 
+const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+
 interface Stats {
     rank_atual: string;
     kd_ratio: string;
@@ -40,6 +42,8 @@ interface Usuario {
     tipo: string;
     avatar_url?: string;
     banner_preset?: number;
+    riot_id_verified?: boolean;
+    discord_id?: string;
 }
 
 // Rank tier configuration
@@ -105,7 +109,6 @@ export default function Perfil() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editForm, setEditForm] = useState({ nome: '', riot_id: '' });
     const [salvando, setSalvando] = useState(false);
-    const [isSharing, setIsSharing] = useState(false);
     const router = useRouter();
 
     const { data: usuarioApi, mutate: mutateUsuario } = useSWR('/usuarios/me', fetcher);
@@ -155,7 +158,25 @@ export default function Perfil() {
         // SWR takes over the stats and user fetching
     }, []);
 
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const erro = urlParams.get('erro');
+        const success = urlParams.get('success');
 
+        if (success === 'discord_linked') {
+            toast.success('Conta do Riot vinculada com sucesso via Discord! 🎯');
+            // Remove the query param without reloading
+            window.history.replaceState(null, '', '/perfil');
+            mutateUsuario(); // Refresh to get the verified status
+        } else if (erro) {
+            if (erro === 'discord_already_linked') toast.error('Este Discord já está vinculado a outra conta!');
+            else if (erro === 'no_riot_connection') toast.error('Nenhuma conta da Riot Games foi encontrada no seu Discord!');
+            else if (erro === 'riot_id_taken') toast.error('O Riot ID do seu Discord já está sendo usado por outro usuário!');
+            else toast.error('Erro na vinculação do Discord. Tente novamente.');
+            
+            window.history.replaceState(null, '', '/perfil');
+        }
+    }, [mutateUsuario]);
 
     async function changeBanner() {
         if (!usuario) return;
@@ -304,8 +325,31 @@ export default function Perfil() {
                             <h1 className="text-3xl font-black text-white" style={{ fontFamily: 'var(--font-chakra), sans-serif' }}>
                                 {usuario.nome}
                             </h1>
-                            {usuario.riot_id && (
-                                <p className="text-zinc-400 mt-0.5 font-mono text-sm">{usuario.riot_id}</p>
+                            {usuario.riot_id ? (
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <p className="text-zinc-400 font-mono text-sm">{usuario.riot_id}</p>
+                                    {usuario.riot_id_verified ? (
+                                        <span className="text-[10px] font-bold bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20 uppercase tracking-wider flex items-center gap-1">
+                                            ✓ Verificado
+                                        </span>
+                                    ) : (
+                                        <button 
+                                            onClick={() => window.location.href = `${BACKEND_URL}/api/discord/auth?token=${localStorage.getItem('token')}`}
+                                            className="text-[10px] font-bold bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/20 px-2 py-0.5 rounded border border-[#5865F2]/30 uppercase tracking-wider transition-colors"
+                                        >
+                                            Vincular Discord
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="mt-1">
+                                    <button 
+                                        onClick={() => window.location.href = `${BACKEND_URL}/api/discord/auth?token=${localStorage.getItem('token')}`}
+                                        className="text-xs font-bold bg-[#5865F2] text-white hover:bg-[#4752C4] px-3 py-1 rounded clip-tatico uppercase tracking-wider transition-colors shadow-lg shadow-[#5865F2]/20"
+                                    >
+                                        Vincular Riot via Discord
+                                    </button>
+                                </div>
                             )}
                             <span className="mt-1 inline-block text-xs bg-zinc-800/60 text-zinc-400 px-2 py-0.5 rounded-md uppercase tracking-wider border border-zinc-700/50">
                                 {usuario.tipo}
@@ -541,9 +585,14 @@ export default function Perfil() {
                             placeholder="Ex: TenZ#NA1"
                             value={editForm.riot_id}
                             onChange={(e) => setEditForm({ ...editForm, riot_id: e.target.value })}
-                            className="w-full bg-[var(--bg-surface)] border border-zinc-700 text-white rounded p-3 focus:outline-none focus:border-red-500 transition-colors font-mono"
+                            disabled={usuario.riot_id_verified}
+                            className={`w-full bg-[var(--bg-surface)] border border-zinc-700 text-white rounded p-3 focus:outline-none focus:border-red-500 transition-colors font-mono ${usuario.riot_id_verified ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
-                        <p className="text-xs text-zinc-500 mt-1">Obrigatório para sincronizar stats.</p>
+                        {usuario.riot_id_verified ? (
+                            <p className="text-xs text-green-500 mt-1">✓ Seu Riot ID está verificado pelo Discord e não pode ser alterado manualmente.</p>
+                        ) : (
+                            <p className="text-xs text-zinc-500 mt-1">Vincule seu Discord no perfil para verificar seu Riot ID permanentemente.</p>
+                        )}
                     </div>
                     <div className="pt-2">
                         <button

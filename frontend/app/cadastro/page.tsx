@@ -9,7 +9,7 @@ import { TacticalButton } from '@/components/ui/TacticalButton';
 import api from '@/lib/api';
 
 export default function Cadastro() {
-    const [form, setForm] = useState({ nome: '', email: '', senha: '', riot_id: '' });
+    const [form, setForm] = useState({ nome: '', email: '', senha: '' });
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -20,6 +20,7 @@ export default function Cadastro() {
             const { data } = await api.post('/usuarios/cadastro', form);
             localStorage.setItem('token', data.token);
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            window.dispatchEvent(new Event('localStorageChange'));
             toast.success('Conta criada! Bem-vindo à arena 🎯');
             router.push('/perfil');
         } catch (err: any) {
@@ -32,19 +33,16 @@ export default function Cadastro() {
     return (
         <div className="min-h-[calc(100vh-57px)] grid grid-cols-1 lg:grid-cols-2">
             {/* ── Left panel ─── */}
-            <div className="hidden lg:flex relative overflow-hidden bg-[var(--bg-base)] items-center justify-center border-r border-zinc-800/50">
+            <div className="hidden lg:flex relative overflow-hidden bg-zinc-950 items-center justify-center border-r border-zinc-800/50">
                 <div className="absolute inset-0">
-                    <div className="absolute inset-0 scanlines opacity-30" />
-                    <div className="absolute inset-0 bg-gradient-to-tr from-red-600/10 to-transparent" />
-                    {/* Grid */}
-                    <div
-                        className="absolute inset-0 opacity-10"
-                        style={{
-                            backgroundImage:
-                                'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
-                            backgroundSize: '32px 32px',
-                        }}
+                    <img 
+                        src="/bg-auth.png" 
+                        alt="Valorant Heroes" 
+                        className="absolute w-full h-full object-cover opacity-60"
                     />
+                    <div className="absolute inset-0 scanlines opacity-40 mix-blend-overlay" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 to-transparent" />
                 </div>
 
                 <div className="relative z-10 text-center px-12 max-w-sm">
@@ -136,15 +134,6 @@ export default function Cadastro() {
                             required
                         />
 
-                        <TacticalInput
-                            id="cadastro-riot-id"
-                            type="text"
-                            label="Riot ID"
-                            value={form.riot_id}
-                            onChange={(e) => setForm({ ...form, riot_id: e.target.value })}
-                            placeholder="smth like you#gigi"
-                            className="font-mono"
-                        />
 
                         <TacticalButton
                             id="cadastro-submit"
