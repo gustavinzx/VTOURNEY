@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { fetcher } from '@/lib/api';
 import { motion } from 'framer-motion';
 import TimeCard from '@/components/TimeCard';
+import { Shield } from 'lucide-react';
 
 interface Time {
     id: number;
@@ -81,11 +82,11 @@ export default function TimesPage() {
                 </div>
             ) : filtered.length === 0 ? (
                 <motion.div
-                    className="border border-dashed border-zinc-800 rounded-2xl p-16 text-center"
+                    className="border border-dashed border-zinc-800 rounded-2xl p-16 text-center flex flex-col items-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                 >
-                    <p className="text-4xl mb-4">🛡</p>
+                    <Shield className="w-10 h-10 text-zinc-600 mb-4" />
                     <p className="text-zinc-400 mb-2 font-medium">
                         {busca ? 'Nenhum time encontrado.' : 'Nenhum time cadastrado ainda.'}
                     </p>

@@ -1,4 +1,5 @@
 import { pool } from '../config/database.js';
+import crypto from 'crypto';
 
 // GET /api/times
 export async function listarTimes(req, res) {
@@ -35,6 +36,11 @@ export async function buscarTime(req, res) {
             return res.status(404).json({ erro: 'Time não encontrado' });
         }
 
+        // Se o usuário que pede não é o capitão, esconde o convite_token
+        if (!req.usuario || req.usuario.id !== times[0].capitao_id) {
+            delete times[0].convite_token;
+        }
+
         // Busca membros do time
         const [membros] = await pool.query(
             `SELECT m.funcao, u.id, u.nome, u.riot_id, u.avatar_url
@@ -59,13 +65,15 @@ export async function criarTime(req, res) {
 
 
 
+        const token = crypto.randomBytes(16).toString('hex');
+
         const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
             const [resultado] = await conn.query(
-                'INSERT INTO times (nome, tag, capitao_id) VALUES (?, ?, ?)',
-                [nome, tag || null, capitao_id]
+                'INSERT INTO times (nome, tag, capitao_id, convite_token) VALUES (?, ?, ?, ?)',
+                [nome, tag || null, capitao_id, token]
             );
 
             const time_id = resultado.insertId;
@@ -77,7 +85,7 @@ export async function criarTime(req, res) {
             );
 
             await conn.commit();
-            res.status(201).json({ id: time_id, mensagem: 'Time criado com sucesso' });
+            res.status(201).json({ id: time_id, mensagem: 'Time criado com sucesso', convite_token: token });
         } catch (err) {
             await conn.rollback();
             throw err;
@@ -134,5 +142,60 @@ export async function deletarTime(req, res) {
         res.json({ mensagem: 'Time deletado com sucesso' });
     } catch (err) {
         res.status(500).json({ erro: 'Erro ao deletar time', detalhe: err.message });
+    }
+}
+
+// POST /api/times/convite/:token
+export async function entrarTime(req, res) {
+    try {
+        const { token } = req.params;
+        const usuario_id = req.usuario.id;
+
+        const [times] = await pool.query('SELECT id, nome FROM times WHERE convite_token = ?', [token]);
+        if (times.length === 0) return res.status(404).json({ erro: 'Convite inválido ou expirado' });
+
+        const time = times[0];
+
+        // Verifica se já está no time
+        const [existente] = await pool.query('SELECT id FROM membros_time WHERE time_id = ? AND usuario_id = ?', [time.id, usuario_id]);
+        if (existente.length > 0) return res.status(400).json({ erro: 'Você já está neste time' });
+
+        // Limite de 7 membros
+        const [contagem] = await pool.query('SELECT COUNT(*) as qtd FROM membros_time WHERE time_id = ?', [time.id]);
+        if (contagem[0].qtd >= 7) return res.status(400).json({ erro: 'O time já está lotado (máx 7 membros)' });
+
+        await pool.query('INSERT INTO membros_time (time_id, usuario_id, funcao) VALUES (?, ?, ?)', [time.id, usuario_id, 'titular']);
+
+        res.json({ mensagem: `Você entrou no time ${time.nome} com sucesso!`, time_id: time.id });
+    } catch (err) {
+        res.status(500).json({ erro: 'Erro ao entrar no time', detalhe: err.message });
+    }
+}
+
+// DELETE /api/times/:id/membros/:userId
+export async function removerMembro(req, res) {
+    try {
+        const timeId = req.params.id;
+        const targetUserId = req.params.userId;
+        const currentUserId = req.usuario.id;
+
+        const [times] = await pool.query('SELECT capitao_id FROM times WHERE id = ?', [timeId]);
+        if (times.length === 0) return res.status(404).json({ erro: 'Time não encontrado' });
+
+        const isCapitao = times[0].capitao_id === currentUserId;
+        const isSelf = parseInt(targetUserId) === currentUserId;
+
+        if (!isCapitao && !isSelf) {
+            return res.status(403).json({ erro: 'Apenas o capitão pode remover outros membros' });
+        }
+
+        if (isSelf && isCapitao) {
+            return res.status(400).json({ erro: 'O capitão não pode sair do time. Você deve deletar o time inteiro.' });
+        }
+
+        await pool.query('DELETE FROM membros_time WHERE time_id = ? AND usuario_id = ?', [timeId, targetUserId]);
+        res.json({ mensagem: 'Membro removido com sucesso' });
+    } catch (err) {
+        res.status(500).json({ erro: 'Erro ao remover membro', detalhe: err.message });
     }
 }

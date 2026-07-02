@@ -16,22 +16,16 @@ export function GlitchText({ text, className }: { text: string; className?: stri
     }
 
     return (
-        <span className={`relative inline-block ${className}`}>
-            <motion.span
-                className="absolute top-0 left-[-2px] text-red-500 opacity-70"
-                animate={{ x: [-2, 2, -2, 0], y: [1, -1, 0, 0] }}
-                transition={{ duration: 0.2, repeat: 10 }}
-            >
-                {text}
-            </motion.span>
-            <motion.span
-                className="absolute top-0 left-[2px] text-cyan-500 opacity-70"
-                animate={{ x: [2, -2, 2, 0], y: [-1, 1, 0, 0] }}
-                transition={{ duration: 0.2, repeat: 10, delay: 0.05 }}
-            >
-                {text}
-            </motion.span>
-            <span className="relative text-white">{text}</span>
+        <span 
+            className={`glitch-text ${className}`} 
+            data-text={text}
+            onMouseEnter={() => setIsGlitching(true)}
+            onMouseLeave={() => {
+                // Keep it glitched for a tiny bit after hover
+                setTimeout(() => setIsGlitching(false), 500);
+            }}
+        >
+            {text}
         </span>
     );
 }

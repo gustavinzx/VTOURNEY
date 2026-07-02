@@ -6,11 +6,11 @@ import useSWR from 'swr';
 import { fetcher } from '@/lib/api';
 import { motion } from 'framer-motion';
 import api from '@/lib/api';
-import { AuroraBackground } from '@/components/ui/AuroraBackground';
 import { GlitchText } from '@/components/ui/GlitchText';
 import { CircleStack } from '@/components/ui/CircleStack';
 import BlurText from '@/components/ui/BlurText';
 import TorneioCard from '@/components/TorneioCard';
+import { Search, Target } from 'lucide-react';
 
 interface Torneio {
     id: number;
@@ -103,8 +103,6 @@ function HomeContent() {
     const torneios = torneiosData || [];
     const loading = !torneiosData && !error;
 
-    const abertos = torneios.filter((t: Torneio) => t.status === 'inscricoes_abertas').length;
-
     return (
         <div>
             {/* ── Hero ────────────────────────────────────────────── */}
@@ -195,7 +193,7 @@ function HomeContent() {
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
                     {/* Busca */}
                     <div className="relative flex-1 max-w-xs">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
                         <input
                             id="filtro-busca"
                             type="text"
@@ -254,7 +252,7 @@ function HomeContent() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                     >
-                        <p className="text-4xl mb-4">🎯</p>
+                        <Target className="w-10 h-10 text-zinc-600 mb-4 mx-auto" />
                         <p className="text-zinc-400 mb-2 font-medium">
                             {busca || status ? 'Nenhum torneio encontrado com esses filtros.' : 'Nenhum torneio ainda.'}
                         </p>
@@ -281,7 +279,7 @@ function HomeContent() {
                     >
                         {torneios.map((t) => (
                             <motion.div key={t.id} variants={cardVariant}>
-                                <TorneioCard {...t} />
+                                <TorneioCard {...t} inscritos={t.times_aprovados} />
                             </motion.div>
                         ))}
                     </motion.div>

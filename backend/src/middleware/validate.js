@@ -10,9 +10,10 @@ export const validate = (schema) => {
             });
             next();
         } catch (error) {
-            if (error instanceof ZodError) {
+            if (error instanceof ZodError || error.name === 'ZodError') {
                 // Mapeia os erros do Zod para um formato amigável
-                const erroMessages = error.errors.map(err => err.message);
+                const errorsList = error.errors || error.issues || [];
+                const erroMessages = errorsList.map(err => err.message);
                 return res.status(400).json({
                     erro: 'Erro de Validação',
                     detalhes: erroMessages,

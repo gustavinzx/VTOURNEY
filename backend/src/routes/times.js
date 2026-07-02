@@ -4,7 +4,9 @@ import {
     buscarTime,
     criarTime,
     adicionarMembro,
-    deletarTime
+    deletarTime,
+    entrarTime,
+    removerMembro
 } from '../controllers/timesController.js';
 import { autenticar } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -16,6 +18,8 @@ router.get('/', listarTimes);
 router.get('/:id', buscarTime);
 router.post('/', autenticar, validate(criarTimeSchema), criarTime);
 router.post('/:id/membros', autenticar, validate(adicionarMembroSchema), adicionarMembro);
+router.post('/convite/:token', autenticar, entrarTime);
+router.delete('/:id/membros/:userId', autenticar, removerMembro);
 router.delete('/:id', autenticar, deletarTime);
 
 export default router;

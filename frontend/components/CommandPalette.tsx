@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
-import { Search, Trophy, Users, Crosshair } from 'lucide-react';
+import { Search, Trophy, Users, Crosshair, ShoppingCart, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function CommandPalette({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) {
@@ -84,6 +84,20 @@ export function CommandPalette({ open, setOpen }: { open: boolean, setOpen: (ope
                                     >
                                         <Users className="w-4 h-4 text-zinc-400 group-hover:text-red-400" />
                                         <span>Rankings de Times</span>
+                                    </Command.Item>
+                                    <Command.Item
+                                        onSelect={() => runCommand(() => router.push('/mercado'))}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded hover:bg-red-500/10 hover:text-white cursor-pointer transition-colors aria-selected:bg-red-500/20 aria-selected:text-white group"
+                                    >
+                                        <ShoppingCart className="w-4 h-4 text-zinc-400 group-hover:text-red-400" />
+                                        <span>Mercado de Transferências</span>
+                                    </Command.Item>
+                                    <Command.Item
+                                        onSelect={() => runCommand(() => router.push('/perfil'))}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded hover:bg-red-500/10 hover:text-white cursor-pointer transition-colors aria-selected:bg-red-500/20 aria-selected:text-white group"
+                                    >
+                                        <User className="w-4 h-4 text-zinc-400 group-hover:text-red-400" />
+                                        <span>Meu Perfil</span>
                                     </Command.Item>
                                 </Command.Group>
                             </Command.List>

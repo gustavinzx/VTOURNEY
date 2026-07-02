@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { HolographicCard } from './HolographicCard';
 import StatusBadge from './StatusBadge';
 
 const formatoLabel: Record<string, string> = {
@@ -30,14 +31,10 @@ export default function TorneioCard({
   data_inicio,
   inscritos,
 }: TorneioCardProps) {
-  const pct = inscritos != null ? Math.round((inscritos / max_times) * 100) : null;
+  const pct = (inscritos != null && max_times > 0) ? Math.round((inscritos / max_times) * 100) : 0;
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -2 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="h-full"
-    >
+    <HolographicCard>
       <Link
         href={`/torneios/${id}`}
         className="group flex flex-col h-full border border-zinc-800 hover:border-red-600/50 bg-[var(--bg-surface)] clip-tatico-tr p-5 transition-all duration-300 hover:bg-zinc-900 relative overflow-hidden"
@@ -95,6 +92,6 @@ export default function TorneioCard({
         </div>
         </div>
       </Link>
-    </motion.div>
+    </HolographicCard>
   );
 }

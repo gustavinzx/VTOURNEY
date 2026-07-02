@@ -66,33 +66,10 @@ export const handleDiscordCallback = async (req, res) => {
             return res.redirect(`${FRONTEND_URL}/perfil?erro=discord_already_linked`);
         }
 
-        // 5. Get Discord Connections to find Riot Games
-        const connectionsResponse = await axios.get('https://discord.com/api/users/@me/connections', {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        });
-
-        const connections = connectionsResponse.data;
-        const riotConnection = connections.find(c => c.type === 'riotgames');
-
-        if (!riotConnection) {
-            // User doesn't have Riot Games connected to Discord
-            // We still save the discord_id so they are linked, but riot is unverified
-            await pool.query('UPDATE usuarios SET discord_id = ? WHERE id = ?', [discordId, userId]);
-            return res.redirect(`${FRONTEND_URL}/perfil?erro=no_riot_connection`);
-        }
-
-        // 6. Save Riot ID and mark as verified!
-        const riotId = riotConnection.name; // e.g., "Gustavin#BR1"
-        
-        // Ensure no one else has this Riot ID to prevent theft across platforms
-        const [riotTaken] = await pool.query('SELECT id FROM usuarios WHERE riot_id = ? AND id != ?', [riotId, userId]);
-        if (riotTaken.length > 0) {
-            return res.redirect(`${FRONTEND_URL}/perfil?erro=riot_id_taken`);
-        }
-
+        // 5. Save Discord ID
         await pool.query(
-            'UPDATE usuarios SET discord_id = ?, riot_id = ?, riot_id_verified = 1 WHERE id = ?',
-            [discordId, riotId, userId]
+            'UPDATE usuarios SET discord_id = ? WHERE id = ?',
+            [discordId, userId]
         );
 
         // Success!

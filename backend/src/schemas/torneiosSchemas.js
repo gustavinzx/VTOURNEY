@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const criarTorneioSchema = z.object({
     body: z.object({
         nome: z.string({ required_error: 'Nome do torneio é obrigatório' }).min(5, 'Nome deve ter no mínimo 5 caracteres'),
-        formato: z.enum(['single_elimination', 'double_elimination', 'round_robin'], { 
-            errorMap: () => ({ message: 'Formato inválido. Opções válidas: single_elimination, double_elimination, round_robin' })
+        formato: z.enum(['eliminacao_simples', 'eliminacao_dupla', 'pontos_corridos'], { 
+            errorMap: () => ({ message: 'Formato inválido. Opções válidas: eliminacao_simples, eliminacao_dupla, pontos_corridos' })
         }),
         max_times: z.number({ required_error: 'Número máximo de times é obrigatório' }).int().min(2, 'O torneio deve ter no mínimo 2 times').max(64, 'O torneio não suporta mais que 64 times'),
         data_inicio: z.string().optional().nullable().refine(val => {

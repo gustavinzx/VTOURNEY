@@ -27,8 +27,8 @@ export function logHenrikError(error, context) {
 }
 
 // ----- v2/account — retorna região, puuid, card -----
-export async function fetchAccount(name, tag) {
-    const url = `${BASE_URL}/v2/account/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
+export async function fetchAccount(name, tag, force = false) {
+    const url = `${BASE_URL}/v2/account/${encodeURIComponent(name)}/${encodeURIComponent(tag)}${force ? '?force=true' : ''}`;
     try {
         const res = await axios.get(url, { headers: HEADERS });
         return res.data.data; // { puuid, region, account_level, name, tag, card, updated_at }

@@ -9,6 +9,7 @@ import { Search } from 'lucide-react';
 const navLinks = [
     { href: '/', label: 'Torneios' },
     { href: '/times', label: 'Times' },
+    { href: '/mercado', label: 'Mercado' },
     { href: '/tracker', label: 'Tracker' },
 ];
 

@@ -12,6 +12,8 @@ import trackerRoutes from './routes/trackerRoutes.js';
 import adminRoutes from './routes/admin.js';
 import partidasRoutes from './routes/partidas.js';
 import discordRoutes from './routes/discord.js';
+import lftRoutes from './routes/lft.js';
+import adminTorneiosRoutes from './routes/adminTorneios.js';
 
 dotenv.config();
 
@@ -33,6 +35,8 @@ app.use(express.json());
 app.use('/api/torneios', torneiosRoutes);
 app.use('/api/torneios/:torneio_id/inscricoes', inscricoesRoutes);
 app.use('/api/torneios/:torneio_id/partidas', partidasRoutes);
+app.use('/api/torneios/:torneio_id/admin', adminTorneiosRoutes);
+app.use('/api/partidas', partidasRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/usuarios', avatarRoutes);        // POST /api/usuarios/me/avatar
 app.use('/api/stats', statsRoutes);
@@ -40,6 +44,7 @@ app.use('/api/times', timesRoutes);
 app.use('/api/tracker', trackerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/discord', discordRoutes);
+app.use('/api/lft', lftRoutes);
 
 app.get('/', (req, res) => {
     res.json({ status: 'API Valorant Tourney rodando 🎯' });

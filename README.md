@@ -1,98 +1,47 @@
-<div align="center">
-  <img src="https://raw.githubusercontent.com/gustavinzx/VTOURNEY/main/frontend/public/icon.png" alt="VTourney Logo" width="120" />
-  <h1>VTourney 🏆</h1>
-  <p><strong>A plataforma definitiva para gerenciar e competir no cenário amador de Valorant.</strong></p>
-</div>
+# VTourney - Plataforma de Torneios de Valorant 🏆
 
----
+Bem-vindo ao repositório do **VTourney**, uma plataforma completa para gerenciamento de torneios amadores de Valorant. O projeto conta com sistema de autenticação, mercado de transferências (LFT), criação de chaves automáticas, e comunicação em tempo real via Discord.
 
-Uma plataforma premium para organização de torneios de Valorant, com sistema de estatísticas reais, tracker sincronizado e UX inspirada na interface tática oficial da Riot Games. Desenvolvido para entregar uma experiência "esports-ready" com animações fluidas, dados em tempo real e micro-interações mecânicas.
+## 🚀 Como rodar o projeto localmente
 
-## 🚀 Principais Features
+Se você acabou de clonar este repositório para testar a aplicação na sua máquina, siga os passos abaixo! O projeto é dividido em duas partes: o **Backend** (Node.js/Express) e o **Frontend** (Next.js/React).
 
-- **Autenticação e Perfis:** Crie sua conta, vincule seu Riot ID e sincronize automaticamente seus status reais (K/D, Win Rate, Rank).
-- **VTourney Tracker:** Um tracker próprio completo. Filtre seu desempenho por mapa, agente e modo de jogo. Veja o histórico de partidas com indicadores táticos.
-- **Gestão de Times:** Crie sua line-up, convide jogadores (titulares e reservas) e exiba sua tag nos torneios.
-- **Ecossistema de Torneios:** Crie campeonatos, defina limite de times, aprove equipes e veja a contagem regressiva para o início. Use Markdown para regras bonitas!
-- **UI/UX Tática (Glassmorphism & VCT):** Botões chanfrados (`clip-tatico`), efeitos Glitch, Glow baseado em Rank (Radiante brilha dourado!), spinners mecânicos de carregamento e blur text.
+### 1. Pré-requisitos
+- [Node.js](https://nodejs.org/) instalado na sua máquina (versão 18 ou superior).
+- Git instalado (para clonar).
 
-## 🛠️ Stack Tecnológico
+### 2. Clonando o Repositório
+Abra o seu terminal e rode:
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd valorant-tourney
+```
 
-**Frontend:**
-- [Next.js 14](https://nextjs.org/) (App Router)
-- [React 18](https://react.dev/)
-- [TailwindCSS](https://tailwindcss.com/) (Utilitários avançados e efeitos customizados)
-- [Framer Motion](https://www.framer.com/motion/) (Animações e transições de página)
-- *ReactBits* & *Aceternity UI* (Efeitos visuais)
-- *Recharts* (Gráficos de performance)
+### 3. Configurando as Variáveis de Ambiente (.env)
+Como as chaves de segurança e senhas do banco de dados ficam ocultas, você não vai baixá-las ao fazer o clone. Peça ao administrador do projeto as duas chaves de ambiente:
+1. **No Backend:** Crie um arquivo chamado `.env` dentro da pasta `backend` e cole as variáveis (conexão com Aiven Cloud MySQL, JWT Secret, etc).
+2. **No Frontend:** Crie um arquivo chamado `.env.local` dentro da pasta `frontend` e cole as variáveis (link da API, etc).
 
-**Backend:**
-- Node.js & [Express](https://expressjs.com/)
-- [MySQL](https://www.mysql.com/) (com driver mysql2/promise)
-- Autenticação via JWT (JSON Web Tokens)
-- [Cloudinary](https://cloudinary.com/) (Armazenamento de imagens)
-- [HenrikDev API](https://docs.henrikdev.xyz/) (Provedor não-oficial de dados do Valorant)
+### 4. Instalando e Iniciando o Backend
+Abra um terminal, acesse a pasta do backend, instale os pacotes e inicie o servidor:
+```bash
+cd backend
+npm install
+npm run dev
+```
+*(O backend deverá rodar na porta 3001 e se conectar ao banco de dados na nuvem)*
 
----
+### 5. Instalando e Iniciando o Frontend
+Mantenha o terminal do backend aberto. Abra **um novo terminal**, acesse a pasta do frontend, instale os pacotes e inicie o site:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+*(O frontend deverá rodar na porta 3000)*
 
-## ⚙️ Como Inicializar o Projeto Localmente
+### 6. Tudo pronto! 🎉
+Agora basta abrir o seu navegador de internet e acessar:
+**http://localhost:3000**
 
-O repositório é um monorepo contendo tanto a API quanto a aplicação web. Siga os passos abaixo:
-
-### Pré-requisitos
-- **Node.js** (v18+)
-- **MySQL** (rodando localmente ou em nuvem)
-- Uma chave da **Valorant API (HenrikDev)** (opcional para algumas requisições básicas com rate-limit generoso, mas recomendada).
-
-### Passo 1: Configurando o Backend (API)
-
-1. Entre na pasta do servidor e instale as dependências:
-   ```bash
-   cd backend
-   npm install
-   ```
-
-2. Crie e configure as variáveis de ambiente baseadas no `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-   *Edite o arquivo `.env` gerado e preencha suas credenciais do MySQL, Cloudinary e a chave JWT.*
-
-3. Execute o script SQL para criar as tabelas no seu MySQL:
-   *(Consulte o código/scripts de db no projeto para a estrutura das tabelas)*
-
-4. Rode o servidor:
-   ```bash
-   npm run dev
-   ```
-   > O backend estará rodando em `http://localhost:3001`
-
-### Passo 2: Configurando o Frontend (Web)
-
-1. Em um novo terminal, vá para a pasta da web:
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-2. Crie um arquivo `.env.local` na raiz de `frontend/` com a URL do backend:
-   ```bash
-   echo "NEXT_PUBLIC_API_URL=http://localhost:3001" > .env.local
-   ```
-
-3. Inicie o servidor frontend:
-   ```bash
-   npm run dev
-   ```
-   > A aplicação estará disponível em `http://localhost:3000`
-
----
-
-## 🎨 Contribuindo
-
-Pull Requests são muito bem vindos. Ao contribuir com UI, por favor siga a **Regra de Ouro da Estética do Projeto**:
-> O site deve parecer um jogo feito por quem joga, não um template corporativo. Use cantos cortados (clip-path), cores semânticas (vermelho primário `#FF4655`) e o mínimo necessário de animações para não pesar. Evite fundos brancos.
-
-## 📝 Licença
-Desenvolvido por Gustavo Silva dos Santos.
-Licenciado sob a [MIT License](LICENSE).
+Qualquer dado que você alterar ou conta que você criar vai ser refletida no banco de dados oficial, então você e seus amigos podem interagir em tempo real no sistema!

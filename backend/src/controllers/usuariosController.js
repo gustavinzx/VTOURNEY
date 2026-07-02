@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database.js';
+import { fetchAccount } from '../services/valorantApiService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRA_EM = '7d';
@@ -24,7 +25,7 @@ export async function cadastrarUsuario(req, res) {
         );
 
         const token = jwt.sign(
-            { id: resultado.insertId, email, tipo: 'jogador' },
+            { id: resultado.insertId, email, nome, tipo: 'jogador' },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRA_EM }
         );
@@ -56,7 +57,7 @@ export async function loginUsuario(req, res) {
             return res.status(401).json({ erro: 'Email ou senha inválidos' });
         }
 
-        const token = jwt.sign({ id: usuario.id, email: usuario.email, tipo: usuario.tipo }, JWT_SECRET, { expiresIn: JWT_EXPIRA_EM });
+        const token = jwt.sign({ id: usuario.id, email: usuario.email, nome: usuario.nome, tipo: usuario.tipo }, JWT_SECRET, { expiresIn: JWT_EXPIRA_EM });
 
         res.json({
             mensagem: 'Login realizado com sucesso',
@@ -103,5 +104,38 @@ export async function atualizarPerfil(req, res) {
         res.json({ mensagem: 'Perfil atualizado com sucesso' });
     } catch (err) {
         res.status(500).json({ erro: 'Erro ao atualizar perfil', detalhe: err.message });
+    }
+}
+
+// POST /api/usuarios/me/verificar-riot
+export async function verificarRiotID(req, res) {
+    try {
+        const [rows] = await pool.query('SELECT riot_id, riot_id_verified FROM usuarios WHERE id = ?', [req.usuario.id]);
+        if (rows.length === 0) return res.status(404).json({ erro: 'Usuário não encontrado' });
+        
+        const usuario = rows[0];
+        if (!usuario.riot_id) return res.status(400).json({ erro: 'Nenhum Riot ID cadastrado' });
+        if (usuario.riot_id_verified) return res.json({ mensagem: 'Riot ID já está verificado' });
+
+        const [nome, tag] = usuario.riot_id.split('#');
+        if (!nome || !tag) return res.status(400).json({ erro: 'Riot ID inválido' });
+
+        // Chama a API ignorando o cache
+        const data = await fetchAccount(nome, tag, true);
+        
+        // UUID do "VALORANT Card"
+        const VERIFY_CARD_UUID = '9fb348bc-41a0-91ad-8a3e-818035c4e561';
+
+        if (data?.card?.id === VERIFY_CARD_UUID) {
+            await pool.query('UPDATE usuarios SET riot_id_verified = 1 WHERE id = ?', [req.usuario.id]);
+            return res.json({ mensagem: 'Conta verificada com sucesso!' });
+        } else {
+            return res.status(400).json({ 
+                erro: 'Cartão Incorreto', 
+                detalhe: `O card equipado na conta não é o 'VALORANT Card'. A API detectou que o card equipado é: ${data?.card?.id}. Equipe o card correto e aguarde uns segundos.`
+            });
+        }
+    } catch (err) {
+        return res.status(500).json({ erro: 'Erro ao verificar conta na Riot Games', detalhe: err.response?.data?.errors?.[0]?.message || err.message });
     }
 }

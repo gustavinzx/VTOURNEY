@@ -141,10 +141,10 @@ export default function RankCardPage() {
                 ref={cardRef}
                 className="relative overflow-hidden rounded-2xl"
                 style={{
-                    width: 600,
-                    height: 300,
+                    width: 700,
+                    height: 350,
                     background: '#09090b',
-                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    fontFamily: '"Chakra Petch", system-ui, -apple-system, sans-serif',
                 }}
             >
                 {/* Background base */}
@@ -201,43 +201,44 @@ export default function RankCardPage() {
                 }} />
 
                 {/* Content */}
-                <div style={{ position: 'relative', zIndex: 10, padding: '32px 36px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ position: 'relative', zIndex: 10, padding: '40px 48px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 
                     {/* Top row */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                         {/* Identity */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                             {/* Avatar */}
                             <div style={{
-                                width: 64, height: 64,
-                                clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
+                                width: 80, height: 80,
+                                clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
                                 background: `linear-gradient(135deg, ${rs.accent}, ${rs.accent}60)`,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 22, fontWeight: 900, color: '#fff',
-                                boxShadow: `0 8px 24px ${rs.glow}`,
+                                fontSize: 26, fontWeight: 900, color: '#fff',
+                                boxShadow: `0 0 20px ${rs.glow}`,
                                 flexShrink: 0,
+                                border: `2px solid ${rs.accent}80`
                             }}>
                                 {usuario.avatar_url
-                                    ? <img src={usuario.avatar_url} alt="" style={{ width: '100%', height: '100%', borderRadius: 16, objectFit: 'cover' }} />
+                                    ? <img src={usuario.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     : getInitials(usuario.nome)
                                 }
                             </div>
 
                             <div>
-                                <div style={{ color: '#fff', fontSize: 22, fontWeight: 900, letterSpacing: '-0.5px' }}>
+                                <div style={{ color: '#fff', fontSize: 28, fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                                     {usuario.nome}
                                 </div>
                                 {usuario.riot_id && (
-                                    <div style={{ color: '#71717a', fontSize: 12, fontFamily: 'monospace', marginTop: 2 }}>
+                                    <div style={{ color: '#a1a1aa', fontSize: 13, fontFamily: 'monospace', marginTop: 0 }}>
                                         {usuario.riot_id}
                                     </div>
                                 )}
                                 <div style={{
-                                    marginTop: 6, display: 'inline-block',
-                                    background: `${rs.accent}20`, border: `1px solid ${rs.accent}40`,
-                                    borderRadius: 6, padding: '2px 10px',
-                                    color: rs.accent, fontSize: 11, fontWeight: 700,
-                                    letterSpacing: '0.08em', textTransform: 'uppercase',
+                                    marginTop: 8, display: 'inline-block',
+                                    background: `linear-gradient(90deg, ${rs.accent}40, transparent)`, borderLeft: `3px solid ${rs.accent}`,
+                                    padding: '4px 12px',
+                                    color: '#fff', fontSize: 12, fontWeight: 800,
+                                    letterSpacing: '0.15em', textTransform: 'uppercase',
                                 }}>
                                     {stats.rank_atual}
                                 </div>
@@ -246,17 +247,20 @@ export default function RankCardPage() {
 
                         {/* Tier badge */}
                         <div style={{
-                            width: 56, height: 56, borderRadius: 12,
-                            background: `${rs.accent}15`, border: `2px solid ${rs.accent}40`,
+                            width: 64, height: 64,
+                            background: `linear-gradient(135deg, #18181b, #09090b)`,
+                            border: `2px solid ${rs.accent}80`,
+                            boxShadow: `0 0 15px ${rs.glow}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 18, fontWeight: 900, color: rs.accent,
+                            fontSize: 24, fontWeight: 900, color: rs.accent,
+                            clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
                         }}>
                             {rs.tier}
                         </div>
                     </div>
 
                     {/* Stats row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                         {[
                             { label: 'K/D Ratio', value: stats.kd_ratio, raw: parseFloat(stats.kd_ratio), max: 3, suffix: '' },
                             { label: 'Win Rate', value: `${stats.win_rate}%`, raw: parseFloat(stats.win_rate), max: 100, suffix: '' },
@@ -264,17 +268,21 @@ export default function RankCardPage() {
                             { label: 'Partidas', value: String(stats.partidas_analisadas), raw: stats.partidas_analisadas, max: 50, suffix: '' },
                         ].map(s => (
                             <div key={s.label} style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                borderRadius: 10, padding: '10px 12px',
-                                border: '1px solid rgba(255,255,255,0.06)',
+                                background: 'rgba(0,0,0,0.4)',
+                                padding: '12px 16px',
+                                borderTop: `2px solid ${rs.accent}50`,
+                                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                borderLeft: '1px solid rgba(255,255,255,0.05)',
+                                borderRight: '1px solid rgba(255,255,255,0.05)',
+                                position: 'relative',
                             }}>
-                                <div style={{ color: '#52525b', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+                                <div style={{ color: rs.accent, fontSize: 10, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 6 }}>
                                     {s.label}
                                 </div>
-                                <div style={{ color: '#fff', fontSize: 20, fontWeight: 900, lineHeight: 1 }}>
+                                <div style={{ color: '#fff', fontSize: 24, fontWeight: 900, lineHeight: 1 }}>
                                     {s.value}
                                 </div>
-                                <div style={{ marginTop: 6 }}>
+                                <div style={{ marginTop: 8 }}>
                                     <StatBar value={s.raw} max={s.max} color={rs.accent} />
                                 </div>
                             </div>

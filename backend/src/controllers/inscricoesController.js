@@ -53,7 +53,7 @@ export async function inscreverTime(req, res) {
 
         // Verifica limite de times
         const [inscritos] = await pool.query(
-            'SELECT COUNT(*) AS total FROM inscricoes_torneio WHERE torneio_id = ? AND status = "aprovada"',
+            "SELECT COUNT(*) AS total FROM inscricoes_torneio WHERE torneio_id = ? AND status = 'aprovada'",
             [torneio_id]
         );
         if (inscritos[0].total >= torneios[0].max_times) {

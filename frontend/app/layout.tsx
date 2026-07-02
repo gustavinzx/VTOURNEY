@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
-import { Inter, Chakra_Petch } from 'next/font/google';
+import { Chakra_Petch } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import { Toaster } from 'sonner';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const chakra = Chakra_Petch({
     subsets: ['latin'],
     weight: ['400', '500', '600', '700'],
@@ -25,8 +24,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="pt-BR" className={`${inter.variable} ${chakra.variable}`}>
-            <body className="bg-zinc-950 text-white min-h-screen antialiased">
+        <html lang="pt-BR" className={`${chakra.variable}`}>
+            <body className="bg-zinc-950 text-white min-h-screen antialiased font-chakra">
                 <Navbar />
                 <main>{children}</main>
                 <Toaster
@@ -36,8 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     closeButton
                     toastOptions={{
                         duration: 3500,
+                        className: 'font-chakra',
                         style: {
-                            fontFamily: 'var(--font-inter), Inter, sans-serif',
+                            fontFamily: 'var(--font-chakra), sans-serif',
                         },
                     }}
                 />

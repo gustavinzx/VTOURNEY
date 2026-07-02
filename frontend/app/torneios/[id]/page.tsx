@@ -12,7 +12,7 @@ import TimeCard from '@/components/TimeCard';
 import Modal from '@/components/Modal';
 import TournamentBracket from '@/components/TournamentBracket';
 import ReactMarkdown from 'react-markdown';
-import { Copy, CheckCircle2, Circle, X } from 'lucide-react';
+import { Copy, CheckCircle2, Circle, X, Trophy, Shield } from 'lucide-react';
 
 interface Torneio {
     id: number;
@@ -112,7 +112,7 @@ export default function TorneioPage() {
         setInscrevendo(true);
         try {
             await api.post(`/torneios/${id}/inscricoes`, { time_id: selectedTime });
-            toast.success('Inscrição realizada! Aguardando aprovação 🎯');
+            toast.success('Inscrição realizada! Aguardando aprovação', { icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> });
             setModalOpen(false);
             mutateInscricoes();
         } catch (err: any) {
@@ -125,7 +125,7 @@ export default function TorneioPage() {
     async function gerarBracket() {
         try {
             await api.post(`/torneios/${id}/partidas/gerar-bracket`);
-            toast.success('Chaveamento gerado com sucesso! 🏆');
+            toast.success('Chaveamento gerado com sucesso!', { icon: <Trophy className="w-4 h-4 text-amber-500" /> });
             mutatePartidas();
             
             if (torneio) mutateTorneio({ ...torneio, status: 'em_andamento' }, false);
@@ -145,11 +145,7 @@ export default function TorneioPage() {
     }
 
     function handleMatchClick(match: any) {
-        if (usuario?.id !== torneio?.organizador_id) return;
-        setSelectedMatch(match);
-        setPlacarA(0);
-        setPlacarB(0);
-        setReportModalOpen(true);
+        router.push(`/partidas/${match.id}`);
     }
 
     async function reportarPlacar(e: React.FormEvent) {
@@ -231,8 +227,8 @@ export default function TorneioPage() {
 
     if (!torneio) return null;
 
-    const aprovados = inscricoes.filter((i) => i.status === 'aprovada');
-    const pct = Math.round((aprovados.length / torneio.max_times) * 100);
+    const aprovados = Array.isArray(inscricoes) ? inscricoes.filter((i) => i.status === 'aprovada') : [];
+    const pct = (torneio.max_times && torneio.max_times > 0) ? Math.round((aprovados.length / torneio.max_times) * 100) : 0;
     const isOrganizer = usuario?.id === torneio.organizador_id;
 
     const getCountdown = (dateStr: string | null | undefined) => {
@@ -273,13 +269,22 @@ export default function TorneioPage() {
                                     Torneio #{torneio.id}
                                 </p>
                                 {isOrganizer && (
-                                    <button 
-                                        onClick={() => router.push(`/torneios/criar?clone=${torneio.id}`)}
-                                        className="flex items-center gap-1.5 text-zinc-500 hover:text-white transition-colors bg-zinc-900 px-2 py-1 rounded border border-zinc-800 text-[10px] uppercase font-bold tracking-wider"
-                                        title="Duplicar torneio (Item 126)"
-                                    >
-                                        <Copy size={12} /> Duplicar
-                                    </button>
+                                    <>
+                                        <button 
+                                            onClick={() => router.push(`/torneios/criar?clone=${torneio.id}`)}
+                                            className="flex items-center gap-1.5 text-zinc-500 hover:text-white transition-colors bg-zinc-900 px-2 py-1 rounded border border-zinc-800 text-[10px] uppercase font-bold tracking-wider"
+                                            title="Duplicar torneio (Item 126)"
+                                        >
+                                            <Copy size={12} /> Duplicar
+                                        </button>
+                                        <Link 
+                                            href={`/torneios/${torneio.id}/admin`}
+                                            className="flex items-center gap-1.5 text-red-500 hover:text-white transition-colors bg-red-900/20 px-2 py-1 rounded border border-red-900 text-[10px] uppercase font-bold tracking-wider"
+                                            title="Painel de Administração"
+                                        >
+                                            Admin Dashboard
+                                        </Link>
+                                    </>
                                 )}
                             </div>
                             <h1 className="text-3xl md:text-4xl font-black text-white" style={{ fontFamily: 'var(--font-chakra), sans-serif' }}>
@@ -404,8 +409,8 @@ export default function TorneioPage() {
                         animate={{ opacity: 1, y: 0 }}
                     >
                         {inscricoes.length === 0 ? (
-                            <div className="border border-dashed border-zinc-800 rounded-xl p-10 text-center">
-                                <p className="text-3xl mb-3">🏆</p>
+                            <div className="border border-dashed border-zinc-800 rounded-xl p-10 text-center flex flex-col items-center">
+                                <Trophy className="w-8 h-8 text-zinc-600 mb-3" />
                                 <p className="text-zinc-500">Nenhum time inscrito ainda.</p>
                             </div>
                         ) : (
@@ -484,7 +489,7 @@ export default function TorneioPage() {
                                 )}
                             </div>
                         ) : (
-                            <TournamentBracket rounds={roundsData} onMatchClick={isOrganizer ? handleMatchClick : undefined} />
+                            <TournamentBracket rounds={roundsData} onMatchClick={handleMatchClick} />
                         )}
                     </motion.div>
                 )}
@@ -493,8 +498,8 @@ export default function TorneioPage() {
             {/* Modal de inscrição */}
             <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Inscrever meu time">
                 {meusTimes.length === 0 ? (
-                    <div className="text-center py-4">
-                        <p className="text-3xl mb-3">🛡</p>
+                    <div className="text-center py-4 flex flex-col items-center">
+                        <Shield className="w-8 h-8 text-zinc-600 mb-3" />
                         <p className="text-zinc-400 mb-1 font-medium">Você não tem times como capitão.</p>
                         <p className="text-zinc-600 text-sm mb-4">
                             Crie um time primeiro para poder participar.

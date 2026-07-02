@@ -23,6 +23,7 @@ interface Time {
     capitao_id: number;
     capitao_nome: string;
     criado_em: string;
+    convite_token?: string;
     membros: Membro[];
 }
 
@@ -54,9 +55,6 @@ export default function TimePerfilPage() {
     const router = useRouter();
 
     const [usuario, setUsuario] = useState<{ id: number } | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [addForm, setAddForm] = useState({ usuario_id: '', funcao: 'titular' });
-    const [adicionando, setAdicionando] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     async function deletarTime() {
@@ -82,22 +80,34 @@ export default function TimePerfilPage() {
         router.push('/times');
     }
 
-    async function adicionarMembro() {
-        if (!addForm.usuario_id) { toast.error('Informe o ID do usuário'); return; }
-        setAdicionando(true);
+    async function removerMembro(userId: number) {
+        if (!confirm('Deseja realmente remover este membro?')) return;
         try {
-            await api.post(`/times/${id}/membros`, {
-                usuario_id: parseInt(addForm.usuario_id),
-                funcao: addForm.funcao,
-            });
-            toast.success('Membro adicionado!');
-            setModalOpen(false);
+            await api.delete(`/times/${id}/membros/${userId}`);
+            toast.success('Membro removido.');
             mutateTime();
         } catch (err: any) {
-            toast.error(err.response?.data?.erro ?? 'Erro ao adicionar membro');
-        } finally {
-            setAdicionando(false);
+            toast.error(err.response?.data?.erro ?? 'Erro ao remover membro');
         }
+    }
+
+    async function sairDoTime() {
+        if (!usuario) return;
+        if (!confirm('Deseja realmente sair do time?')) return;
+        try {
+            await api.delete(`/times/${id}/membros/${usuario.id}`);
+            toast.success('Você saiu do time.');
+            router.push('/times');
+        } catch (err: any) {
+            toast.error(err.response?.data?.erro ?? 'Erro ao sair do time');
+        }
+    }
+
+    function copiarConvite() {
+        if (!time?.convite_token) return;
+        const link = `${window.location.origin}/times/convite/${time.convite_token}`;
+        navigator.clipboard.writeText(link);
+        toast.success('Link de convite copiado!');
     }
 
     if (loading) {
@@ -173,8 +183,8 @@ export default function TimePerfilPage() {
                         </p>
                     </div>
 
-                    {isCapitao && (
-                        <div className="shrink-0 flex items-center gap-2">
+                    {usuario && time.capitao_id === usuario.id ? (
+                        <div className="shrink-0 flex flex-col sm:flex-row items-end sm:items-center gap-2">
                             <button
                                 onClick={() => {
                                     if (confirmDelete) deletarTime();
@@ -188,18 +198,30 @@ export default function TimePerfilPage() {
                                         ? 'bg-red-600 text-white animate-pulse' 
                                         : 'border border-zinc-800 text-zinc-400 hover:text-red-400 hover:border-red-400/50'
                                 }`}
-                                title="Item 51: Confirmação dupla em ação destrutiva"
+                                title="Ação destrutiva"
                             >
                                 {confirmDelete ? 'Confirmar Exclusão' : 'Excluir Time'}
                             </button>
-                            <button
-                                id="btn-adicionar-membro"
-                                onClick={() => setModalOpen(true)}
-                                className="border border-red-600/50 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-                            >
-                                + Membro
-                            </button>
+                            {time.convite_token && (
+                                <button
+                                    onClick={copiarConvite}
+                                    className="border border-red-600/50 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                                >
+                                    Copiar Convite
+                                </button>
+                            )}
                         </div>
+                    ) : (
+                        usuario && time.membros.some((m: any) => m.id === usuario.id) ? (
+                            <div className="shrink-0 flex items-center gap-2">
+                                <button
+                                    onClick={sairDoTime}
+                                    className="border border-zinc-800 text-zinc-400 hover:text-red-400 hover:border-red-400/50 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                                >
+                                    Sair do Time
+                                </button>
+                            </div>
+                        ) : null
                     )}
                 </div>
             </motion.div>
@@ -243,63 +265,19 @@ export default function TimePerfilPage() {
                             <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-zinc-800 text-zinc-400 border border-zinc-700 shrink-0">
                                 {funcaoLabel[m.funcao] ?? m.funcao}
                             </span>
+                            {isCapitao && m.id !== usuario?.id && (
+                                <button 
+                                    onClick={() => removerMembro(m.id)}
+                                    className="ml-2 text-zinc-600 hover:text-red-500"
+                                    title="Remover Jogador"
+                                >
+                                    ✖
+                                </button>
+                            )}
                         </motion.div>
                     ))}
                 </motion.div>
             </div>
-
-            {/* Modal adicionar membro */}
-            <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Adicionar membro">
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-zinc-400 text-xs mb-1.5 uppercase tracking-wider font-medium">
-                            ID do usuário
-                        </label>
-                        <input
-                            id="add-membro-usuario-id"
-                            type="number"
-                            value={addForm.usuario_id}
-                            onChange={(e) => setAddForm({ ...addForm, usuario_id: e.target.value })}
-                            className="w-full bg-zinc-800 border border-zinc-700 focus:border-red-600 text-white rounded-xl px-4 py-3 outline-none transition-all text-sm placeholder:text-zinc-600"
-                            placeholder="Ex: 42"
-                        />
-                        <p className="text-zinc-600 text-xs mt-1.5">
-                            O usuário precisa estar cadastrado na plataforma.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label className="block text-zinc-400 text-xs mb-1.5 uppercase tracking-wider font-medium">
-                            Função
-                        </label>
-                        <select
-                            id="add-membro-funcao"
-                            value={addForm.funcao}
-                            onChange={(e) => setAddForm({ ...addForm, funcao: e.target.value })}
-                            className="w-full bg-zinc-800 border border-zinc-700 focus:border-red-600 text-white rounded-xl px-4 py-3 outline-none transition-all text-sm"
-                        >
-                            <option value="titular">Titular</option>
-                            <option value="reserva">Reserva</option>
-                        </select>
-                    </div>
-
-                    <button
-                        id="add-membro-submit"
-                        onClick={adicionarMembro}
-                        disabled={adicionando}
-                        className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99]"
-                    >
-                        {adicionando ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Adicionando...
-                            </span>
-                        ) : (
-                            'Adicionar membro'
-                        )}
-                    </button>
-                </div>
-            </Modal>
         </div>
     );
 }

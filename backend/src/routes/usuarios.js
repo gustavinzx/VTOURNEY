@@ -3,7 +3,8 @@ import {
     cadastrarUsuario,
     loginUsuario,
     buscarPerfil,
-    atualizarPerfil
+    atualizarPerfil,
+    verificarRiotID
 } from '../controllers/usuariosController.js';
 import { autenticar } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -18,5 +19,6 @@ router.post('/login', validate(loginSchema), loginUsuario);
 // Rotas protegidas (precisam de token JWT)
 router.get('/me', autenticar, buscarPerfil);
 router.put('/me', autenticar, validate(updatePerfilSchema), atualizarPerfil);
+router.post('/me/verificar-riot', autenticar, verificarRiotID);
 
 export default router;

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { Trophy } from 'lucide-react';
 import TorneioCard from '@/components/TorneioCard';
 import { TacticalInput } from '@/components/ui/TacticalInput';
 import { TacticalButton } from '@/components/ui/TacticalButton';
@@ -62,7 +63,7 @@ function CriarTorneioForm() {
                 return;
             }
             await api.post('/torneios', { ...form, organizador_id: usuario.id });
-            toast.success('Torneio criado com sucesso! 🏆');
+            toast.success('Torneio criado com sucesso!', { icon: <Trophy className="w-4 h-4 text-amber-500" /> });
             router.push('/');
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao criar torneio');

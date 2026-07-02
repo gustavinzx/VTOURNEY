@@ -12,7 +12,8 @@ import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import { AnimatedList, AnimatedListItem } from '@/components/ui/AnimatedList';
 import ShinyText from '@/components/ui/ShinyText';
 import AvatarUpload from '@/components/AvatarUpload';
-import { Swords, Target, ShieldCheck, Zap, Crown } from 'lucide-react';
+import { HolographicCard } from '@/components/HolographicCard';
+import { Swords, Target, ShieldCheck, Zap, Crown, Palette, BarChart, IdCard } from 'lucide-react';
 
 const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
 
@@ -164,14 +165,12 @@ export default function Perfil() {
         const success = urlParams.get('success');
 
         if (success === 'discord_linked') {
-            toast.success('Conta do Riot vinculada com sucesso via Discord! 🎯');
+            toast.success('Conta do Discord vinculada com sucesso! 🎮');
             // Remove the query param without reloading
             window.history.replaceState(null, '', '/perfil');
             mutateUsuario(); // Refresh to get the verified status
         } else if (erro) {
             if (erro === 'discord_already_linked') toast.error('Este Discord já está vinculado a outra conta!');
-            else if (erro === 'no_riot_connection') toast.error('Nenhuma conta da Riot Games foi encontrada no seu Discord!');
-            else if (erro === 'riot_id_taken') toast.error('O Riot ID do seu Discord já está sendo usado por outro usuário!');
             else toast.error('Erro na vinculação do Discord. Tente novamente.');
             
             window.history.replaceState(null, '', '/perfil');
@@ -268,6 +267,7 @@ export default function Perfil() {
     return (
         <div className="max-w-4xl mx-auto px-4 py-10">
             {/* ── Profile header banner ─── */}
+            <HolographicCard>
             <motion.div
                 className="relative rounded-2xl overflow-hidden mb-8 border"
                 style={{
@@ -317,43 +317,36 @@ export default function Perfil() {
                                 <button
                                     onClick={changeBanner}
                                     title="Mudar banner"
-                                    className="w-5 h-5 rounded-full border border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-red-500 hover:text-red-400 transition-colors text-[10px] text-zinc-500"
+                                    className="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-red-500 hover:text-red-400 transition-colors text-zinc-500"
                                 >
-                                    🎨
+                                    <Palette className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                             <h1 className="text-3xl font-black text-white" style={{ fontFamily: 'var(--font-chakra), sans-serif' }}>
                                 {usuario.nome}
                             </h1>
-                            {usuario.riot_id ? (
-                                <div className="flex items-center gap-2 mt-0.5">
-                                    <p className="text-zinc-400 font-mono text-sm">{usuario.riot_id}</p>
-                                    {usuario.riot_id_verified ? (
-                                        <span className="text-[10px] font-bold bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20 uppercase tracking-wider flex items-center gap-1">
-                                            ✓ Verificado
-                                        </span>
-                                    ) : (
-                                        <button 
-                                            onClick={() => window.location.href = `${BACKEND_URL}/api/discord/auth?token=${localStorage.getItem('token')}`}
-                                            className="text-[10px] font-bold bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/20 px-2 py-0.5 rounded border border-[#5865F2]/30 uppercase tracking-wider transition-colors"
-                                        >
-                                            Vincular Discord
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="mt-1">
+                            {usuario.riot_id && (
+                                <p className="text-zinc-400 font-mono text-sm mt-0.5">{usuario.riot_id}</p>
+                            )}
+
+                            <div className="mt-2 flex items-center gap-2">
+                                <span className="inline-block text-xs bg-zinc-800/60 text-zinc-400 px-2 py-0.5 rounded-md uppercase tracking-wider border border-zinc-700/50">
+                                    JOGADOR
+                                </span>
+
+                                {usuario.discord_id ? (
+                                    <span className="text-[10px] font-bold bg-[#5865F2]/10 text-[#5865F2] px-1.5 py-0.5 rounded border border-[#5865F2]/30 uppercase tracking-wider flex items-center gap-1">
+                                        ✓ Discord
+                                    </span>
+                                ) : (
                                     <button 
                                         onClick={() => window.location.href = `${BACKEND_URL}/api/discord/auth?token=${localStorage.getItem('token')}`}
-                                        className="text-xs font-bold bg-[#5865F2] text-white hover:bg-[#4752C4] px-3 py-1 rounded clip-tatico uppercase tracking-wider transition-colors shadow-lg shadow-[#5865F2]/20"
+                                        className="text-[10px] font-bold bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/20 px-2 py-0.5 rounded border border-[#5865F2]/30 uppercase tracking-wider transition-colors"
                                     >
-                                        Vincular Riot via Discord
+                                        Vincular Discord
                                     </button>
-                                </div>
-                            )}
-                            <span className="mt-1 inline-block text-xs bg-zinc-800/60 text-zinc-400 px-2 py-0.5 rounded-md uppercase tracking-wider border border-zinc-700/50">
-                                {usuario.tipo}
-                            </span>
+                                )}
+                            </div>
 
                             {/* Rank badge */}
                             {stats && (
@@ -383,7 +376,7 @@ export default function Perfil() {
                                 href="/perfil/card"
                                 className="bg-[var(--bg-surface)] border border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-white px-4 py-2.5 clip-tatico text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 whitespace-nowrap"
                             >
-                                🎴 Rank Card
+                                <IdCard className="w-4 h-4" /> Rank Card
                             </Link>
                         )}
                         <button
@@ -409,6 +402,7 @@ export default function Perfil() {
                     </div>
                 </div>
             </motion.div>
+            </HolographicCard>
 
             {/* ── Stats ─── */}
             {loadingStats ? (
@@ -552,7 +546,7 @@ export default function Perfil() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                 >
-                    <p className="text-4xl mb-4">📊</p>
+                    <BarChart className="w-10 h-10 text-zinc-600 mb-4 mx-auto" />
                     <p className="text-zinc-400 font-medium mb-1">
                         {usuario.riot_id
                             ? 'Nenhuma stat encontrada.'
@@ -585,14 +579,17 @@ export default function Perfil() {
                             placeholder="Ex: TenZ#NA1"
                             value={editForm.riot_id}
                             onChange={(e) => setEditForm({ ...editForm, riot_id: e.target.value })}
-                            disabled={usuario.riot_id_verified}
-                            className={`w-full bg-[var(--bg-surface)] border border-zinc-700 text-white rounded p-3 focus:outline-none focus:border-red-500 transition-colors font-mono ${usuario.riot_id_verified ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={false}
+                            className="w-full bg-[var(--bg-surface)] border border-zinc-700 text-white rounded p-3 focus:outline-none focus:border-red-500 transition-colors font-mono"
                         />
-                        {usuario.riot_id_verified ? (
-                            <p className="text-xs text-green-500 mt-1">✓ Seu Riot ID está verificado pelo Discord e não pode ser alterado manualmente.</p>
-                        ) : (
-                            <p className="text-xs text-zinc-500 mt-1">Vincule seu Discord no perfil para verificar seu Riot ID permanentemente.</p>
-                        )}
+                        <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-200">
+                            <strong>⚠️ ATENÇÃO:</strong> 
+                            <ul className="list-disc list-inside mt-1 space-y-1 text-red-300">
+                                <li>O Riot ID é <strong>único</strong>. Quem registrar primeiro, fica com ele.</li>
+                                <li>Se você jogar o torneio com uma conta diferente da registrada aqui, tomará <strong>W.O automático</strong>.</li>
+                                <li>Use o nick <strong>EXATO</strong> do jogo (incluindo a #Tag) para não ser banido.</li>
+                            </ul>
+                        </div>
                     </div>
                     <div className="pt-2">
                         <button

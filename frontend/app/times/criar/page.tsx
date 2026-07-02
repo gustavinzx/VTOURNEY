@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { Shield } from 'lucide-react';
 
 export default function CriarTime() {
     const [form, setForm] = useState({ nome: '', tag: '' });
@@ -16,7 +17,9 @@ export default function CriarTime() {
         setLoading(true);
         try {
             const { data } = await api.post('/times', form);
-            toast.success('Time criado com sucesso! 🛡');
+            toast.success('Time criado com sucesso!', {
+                icon: <Shield className="w-4 h-4 text-green-500" />
+            });
             router.push(`/times/${data.id}`);
         } catch (err: any) {
             toast.error(err.response?.data?.erro ?? 'Erro ao criar time');
