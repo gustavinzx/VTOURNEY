@@ -3,6 +3,7 @@ import { Chakra_Petch } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import { Toaster } from 'sonner';
+import NextTopLoader from 'nextjs-toploader';
 
 const chakra = Chakra_Petch({
     subsets: ['latin'],
@@ -26,6 +27,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="pt-BR" className={`${chakra.variable}`}>
             <body className="bg-zinc-950 text-white min-h-screen antialiased font-chakra">
+                <NextTopLoader
+                    color="#ef4444"
+                    initialPosition={0.08}
+                    crawlSpeed={200}
+                    height={3}
+                    crawl={true}
+                    showSpinner={false}
+                    easing="ease"
+                    speed={200}
+                    shadow="0 0 10px #ef4444,0 0 5px #ef4444"
+                />
                 <Navbar />
                 <main>{children}</main>
                 <Toaster
